@@ -48,7 +48,7 @@ function eigCF(inputs::InputStruct,k::Complex128; nCF::Int=1,
         return η,u
     end
 end #end of function eigCF
-function eigCF(inputs::InputStruct,k::Untion{Complex128,Float64,Int}, k_type::String; nCF::Int=1,
+function eigCF(inputs::InputStruct,k::Union{Complex128,Float64,Int}, k_type::String; nCF::Int=1,
     F::Array{Float64,1}=[1.], η_init::Complex128=complex(0.),
     u_init::Array{Complex128,1}=Complex128[],
     truncate::Bool=false)::Tuple{Array{Complex128,1},Array{Complex128,2}}
