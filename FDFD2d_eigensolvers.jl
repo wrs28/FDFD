@@ -247,6 +247,8 @@ function eigKNL(inputs::InputStruct, kc::Union{Float64,Int}, Radii::Tuple{Float6
     else
         k = eigKNL(inputs, complex(1.0*kc), Radii, parallel; nk=nk, Nq=Nq, F=F, R_min=R_min,
                 rank_tol=rank_tol)
+    end
+
     return k
 end
 function eigKNL(inputs::InputStruct, kc::Complex128, Radii::Tuple{Float64,Float64};
