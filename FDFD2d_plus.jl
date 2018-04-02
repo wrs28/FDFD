@@ -1,4 +1,4 @@
-module SALT_2d_plus
+module FDFD2d_plus
 
 ( export InputStruct, ChannelStruct, processInputs, updateInputs!, eigCF, eigKL,
 eigNKL, scatter, smatrix, analyze_output, analyze_input, wavePlot)
