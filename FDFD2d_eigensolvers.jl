@@ -152,7 +152,7 @@ k = computeK_NL2(inputs, kc, Radii; nk=3, Nq=100, F=[1.], R_min=.01, rank_tol=1e
 
     Nq is the number of contour quadrature points.
 """
-function eigKNL(inputs::InputStruct, k_init::Untion{Float64,Int}; F::Array{Float64,1}=[1.],
+function eigKNL(inputs::InputStruct, k_init::Union{Float64,Int}; F::Array{Float64,1}=[1.],
     dispOpt::Bool=false,η_init::Complex128=complex(0.),
     u_init::Array{Complex128,1}=Complex128[],
     k_avoid::Array{Complex128,1}=Complex128[0], tol::Float64=.5, max_count::Int = 15,
