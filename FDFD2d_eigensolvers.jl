@@ -341,7 +341,7 @@ function eigKNL(inputs::InputStruct, kc::Complex128, Radii::Tuple{Float64,Float6
 end
 function eigKNL(inputs::InputStruct, kc::Union{Complex128,Float64,Int}, Radii::Tuple{Float64,Float64},
     k_type::String; nk::Int=3, Nq::Int=100, F::Array{Float64,1}=[1.],
-    R_min::Float64=.01, rank_tol::Float64=1e-8, , direction::Array{Int,1}=[1,0],
+    R_min::Float64=.01, rank_tol::Float64=1e-8, direction::Array{Int,1}=[1,0],
     parallel::Bool=false)::Array{Complex{Float64},1}
 
     inputs1 = set_bc(inputs,k_type)
