@@ -4,8 +4,8 @@ module SALT_2d_plus
 eigNKL, scatter, smatrix, analyze_output, analyze_input, wavePlot)
 #, updateInputs, computePolesL, computePolesNL1, computePolesNL2, computeZerosL, computeZerosNL1, computeZerosNL2, computeCFs, solve_SPA, solve_scattered, solve_single_mode_lasing, solve_CPA, computeS, bootstrap, CF_analysis, CF_synthesis, computeZerosL2
 
-include("SALT_2d.jl")
-using .SALT_2d
+include("FDFD2d.jl")
+using .FDFD2d
 using PyPlot
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
