@@ -77,11 +77,11 @@ function eig_k(input::InputStruct, k::Union{Complex128,Float64,Int}, k_type::Str
     ψ_init::Array{Complex128,1}=Complex128[], direction::Array{Int,1}=[1,0])::
     Tuple{Array{Complex128,1},Array{Complex128,2}}
 
-    @time input, bc_original = set_bc(input,k_type, direction)
+    input, bc_original = set_bc(input,k_type, direction)
 
-    @time k, ψ = eig_k(input, k; isLinear=isLinear, nk=nk, F=F, truncate=truncate, ψ_init=ψ_init)
+    k, ψ = eig_k(input, k; isLinear=isLinear, nk=nk, F=F, truncate=truncate, ψ_init=ψ_init)
 
-    @time reset_bc!(input, bc_original)
+    reset_bc!(input, bc_original)
     return k, ψ
 end # end of function eig_k with modified boundary
 
