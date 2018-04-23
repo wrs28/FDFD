@@ -1,41 +1,45 @@
 module FDFD2d_plus
 
-( export InputStruct, ChannelStruct, processInputs, updateInputs!, eigCF, eigKL,
-eigNKL, scatter, smatrix, analyze_output, analyze_input, wavePlot)
-#, updateInputs, computePolesL, computePolesNL1, computePolesNL2, computeZerosL, computeZerosNL1, computeZerosNL2, computeCFs, solve_SPA, solve_scattered, solve_single_mode_lasing, solve_CPA, computeS, bootstrap, CF_analysis, CF_synthesis, computeZerosL2
-
-include("FDFD2d.jl")
-using .FDFD2d
 using PyPlot
+using Formatting
+using Interpolations
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include("FDFD2d_defaults.jl")
+include("FDFD2d_structures.jl")
+include("FDFD2d_core_numerics.jl")
+include("FDFD2d_scattering.jl")
+include("FDFD2d_incident_fields.jl")
+include("FDFD2d_smatrix.jl")
+include("FDFD2d_scattering_analysis.jl")
+# include("FDFD2d_eigensolvers.jl")
 
-
+################################################################################
+##### WAVE PLOT
+################################################################################
+export wave_plot
 """
 wavePlot(ψ, inputs)
 """
-function wavePlot(ψ::Union{Array{Complex{Float64},1}, Array{Complex{Float64},2}},
-    inputs::InputStruct; truncated::Bool = false, array::Bool = true,
-    how::Function = abs2)::Tuple{Array{Float64,1},Array{Float64,1},Array{Complex128,3}}
+function wave_plot(input::InputStruct, ψ::Union{Array{Complex{Float64},1}, Array{Complex{Float64},2}};
+    array::Bool = true, how::Function = abs2)::
+    Tuple{Array{Float64,1},Array{Float64,1},Array{Complex128,3}}
 
     N = size(ψ,2)
 
-    if truncated
-        M = inputs.N
-        x₁ = inputs.x₁
-        x₂ = inputs.x₂
-        ∂R = inputs.∂R
-        r = reshape(inputs.r_ext[inputs.x̄_inds],inputs.N[1],:)
-        ε_sm = reshape(inputs.ε_sm[inputs.x̄_inds],inputs.N[1],:)
-        F_sm = reshape(inputs.F_sm[inputs.x̄_inds],inputs.N[1],:)
+    if size(ψ,1) == prod(input.dis.N)
+        M = input.dis.N
+        x₁ = input.dis.xy[1]
+        x₂ = input.dis.xy[2]
+        ∂R = input.bnd.∂R
+        ε_sm = input.sys.ε_sm
+        F_sm = input.sys.F_sm
     else
-        M = inputs.N_ext
-        x₁ = inputs.x₁_ext
-        x₂ = inputs.x₂_ext
-        ∂R = inputs.∂R_ext
-        r = inputs.r_ext
-        ε_sm = inputs.ε_sm
-        F_sm = inputs.F_sm
+        M = input.dis.N_PML
+        x₁ = input.dis.xy_PML[1]
+        x₂ = input.dis.xy_PML[2]
+        ∂R = input.bnd.∂R_PML
+        ε_sm = input.sys.ε_PML
+        F_sm = input.sys.F_PML
     end
 
     ψ_plot = NaN*zeros(Complex128, M[1], M[2], N)
@@ -51,7 +55,7 @@ function wavePlot(ψ::Union{Array{Complex{Float64},1}, Array{Complex{Float64},2}
         subplots_adjust(wspace=0.0)
 
         subplot(N+1,3,1); axt = gca()
-        pcolormesh(x₁, x₂, transpose(real(sqrt.(ɛ_sm-1im*inputs.D₀*F_sm)))) #transpose(r))
+        pcolormesh(x₁, x₂, transpose(real(sqrt.(ɛ_sm-1im*input.tls.D₀*F_sm)))) #transpose(r))
         xlim( [ ∂R[1],∂R[2] ] )
         ylim( [ ∂R[3],∂R[4] ] )
         axis("tight")
@@ -60,10 +64,10 @@ function wavePlot(ψ::Union{Array{Complex{Float64},1}, Array{Complex{Float64},2}
         setp(axt[:xaxis][:set_label_position]("top"))
 
         subplot(N+1,3,2); axt = gca()
-        pcolormesh(x₁, x₂, transpose(imag(sqrt.(ɛ_sm-1im*inputs.D₀*F_sm))), cmap="bwr")
+        pcolormesh(x₁, x₂, transpose(imag(sqrt.(ɛ_sm-1im*input.tls.D₀*F_sm))), cmap="bwr")
         xlim( [ ∂R[1],∂R[2] ] )
         ylim( [ ∂R[3],∂R[4] ] )
-        clim([-1,1]*findmax(abs.(imag(sqrt.(ɛ_sm-1im*inputs.D₀*F_sm))))[1])
+        clim([-1,1]*findmax(abs.(imag(sqrt.(ɛ_sm-1im*input.tls.D₀*F_sm))))[1])
         axis("tight")
         xlabel("Imag")
         setp(axt[:get_xticklabels](),visible=false)
