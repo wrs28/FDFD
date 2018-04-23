@@ -79,7 +79,7 @@ mutable struct BoundaryStruct
         return x
     end
     function BoundaryStruct(bnd::BoundaryStruct)::BoundaryStruct
-        x = BoundaryStruct(bnd.∂R)
+        x = BoundaryStruct(bnd.∂R, bnd.bc)
         return x
     end
 end # end of struct BoundaryStruct
@@ -472,7 +472,7 @@ update_input!(input, fields, values)
     If changes were made to the ∂R, N, k₀, k, F, ɛ, Γ, bc, a, b, run update_input to
     propagate these changes through the system.
 """
-function update_input!(input::InputStruct, fields::Array{Symbol,1}, values::Array{Any,1})::InputStruct
+function update_input!(input::InputStruct, fields::Array{Symbol,1}, values::Any)::InputStruct
 
     for m in 1:length(fields)
         f = fieldnames(input)
@@ -501,7 +501,7 @@ function update_input!(input::InputStruct, fields::Array{Symbol,1}, values::Arra
         dis = DiscretizationStruct(input.dis)
         sct = ScatteringStruct(input.sct)
         tls = TwoLevelSystemStruct(input.tls)
-        wgs = WaveguideStruct(input.wgs)
+        wgs = [WaveguideStruct(input.wgs[m]) for m in 1:length(input.wgs)]
         input = InputStruct(sys, bnd, dis, sct, tls, wgs)
     end
 
