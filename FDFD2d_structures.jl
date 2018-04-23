@@ -1,9 +1,9 @@
-(export SystemStruct, BoundaryStruct, DiscretizationStruct, ScatteringStruct,
-            TwoLevelSystemStruct, ChannelStruct, WaveguideStruct, InputStruct)
-
 ################################################################################
 ##### SYSTEM DEFINITION
 ################################################################################
+(export SystemStruct, BoundaryStruct, DiscretizationStruct, ScatteringStruct,
+            TwoLevelSystemStruct, ChannelStruct, WaveguideStruct, InputStruct)
+
 """
 sys = SystemStruct(geometry, geoParams, n₁_vals, n₁_inds, n₂_vals, n₂_inds,
     F_vals, F_inds, n, ε, F, ε_sm, F_sm, regions)
@@ -511,6 +511,13 @@ function update_input!(input::InputStruct, field::Symbol, value::Any)::InputStru
     update_input!(input,[field],[value])
     return input
 end # end of function update_input
+function update_input!(input::InputStruct, field::Symbol, ind::Int, value::Any)::InputStruct
+    temp = getfield!(input,field)
+    temp[ind] = value
+    update_input!(input,[field],[value])
+    return input
+end # end of function update_input
+
 
 # ################################################################################
 # ##### SYSTEM STANDARDIZATION
