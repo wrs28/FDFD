@@ -277,7 +277,7 @@ end
 """
 ∫z_dx = trapz(z, dx)
 """
-function trapz(z::Array{Complex128,1}, dx::Array{Float64,1})::Complex128
+function trapz(z::Array{Complex128,1}, dx::Tuple{Float64,Float64})::Complex128
 
     ∫z_dx = prod(dx)*sum(z) # may have to address boundary terms later
 

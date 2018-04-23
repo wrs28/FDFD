@@ -512,87 +512,9 @@ function update_input!(input::InputStruct, field::Symbol, value::Any)::InputStru
     return input
 end # end of function update_input
 
-#
-#
-#
-# function set_bc(input::InputStruct, k_type::String, direction::Array{Int,1})::InputStruct
-#
-#     if k_type ∈ ["Pole","pole","P","p"]
-#         input1 = open_to_pml_out(input)
-#     elseif k_type ∈ ["Zero","zero","Z","z"]
-#         input1 = open_to_pml_in(input)
-#     elseif k_type ∈ ["UZR","uzr","U","u"]
-#         input1 = deepcopy(input)
-#         if (direction[1]==+1) && (input1.bc[1:2] !== ["I", "O"])
-#             update_input!(input1, :bc, ["pml_in", "pml_out", input1.bc[3], input1.bc[4]])
-#         elseif (direction[1]==-1) && (input1.bc[1:2] !== ["O", "I"])
-#             update_input!(input1, :bc, ["pml_out", "pml_in", input1.bc[3], input1.bc[4]])
-#         end
-#         if (direction[2]==+1) && (input1.bc[3:4] !== ["I", "O"])
-#             update_input!(input1, :bc, [input1.bc[1], input1.bc[2], "pml_in", "pml_out"])
-#         elseif (direction[2]==-1) && (input1.bc[3:4] !== ["O", "I"])
-#             update_input!(input1, :bc, [input1.bc[1], input1.bc[2], "pml_out", "pml_in"])
-#         end
-#     end
-#     return input1
-# end
-#
-#
-# """
-# input = open_to_pml_out(input)
-#
-#     converts "open" or "pml_in" to "pml_out", and creates a copy of input if it does so.
-# """
-# function open_to_pml_out(input1::InputStruct)::InputStruct
-#     if any(input1.bc .== "o") || any(input1.bc .== "I")
-#         input = deepcopy(input1)
-#         for i in 1:4
-#             if input.bc[i] in ["o", "I"]
-#                 input.bc[i] = "pml_out"
-#             end
-#         update_input!(input, :bc, input.bc)
-#         end
-#     else
-#         input = input1
-#     end
-#     return input
-# end
-# function open_to_pml_out(input1::InputStruct, flag::Bool)::InputStruct
-#     input = deepcopy(input1)
-#     for i in 1:4
-#         if input.bc[i] in ["o", "I"]
-#             input.bc[i] = "pml_out"
-#         end
-#         update_input!(input, :bc, input.bc)
-#     end
-#     return input
-# end
-#
-#
-# """
-# input = open_to_pml_in(input)
-#
-#     converts "open" or "pml_out" to "pml_in", and creates a copy of input if it does so.
-# """
-# function open_to_pml_in(input1::InputStruct)::InputStruct
-#     if any(input1.bc .== "o") || any(input1.bc .== "O")
-#         input = deepcopy(input1)
-#         for i in 1:4
-#             if input.bc[i] in ["o", "O"]
-#                 input.bc[i] = "pml_in"
-#                 update_input!(input, :bc, input.bc)
-#             end
-#         end
-#     else
-#         input = input1
-#     end
-#     return input
-# end
-#
-#
-#
-#
-#
+# ################################################################################
+# ##### SYSTEM STANDARDIZATION
+# ################################################################################
 """
 fix_bc!(bc)
 """

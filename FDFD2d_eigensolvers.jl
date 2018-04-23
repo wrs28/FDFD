@@ -1,7 +1,8 @@
+export eig_k, eig_cf
+
 ################################################################################
 #### CONSTANT FLUX EIGENVALUE SOLVERS
 ################################################################################
-
 """
 η,u = eig_cf(input, k; ncf=1, F=[1.], η_init=0., u_init=[], truncate=false)
 η,u = eig_cf(input, k, k_type; ncf=1, F=[1.], η_init=0., u_init=[], truncate=false)
@@ -17,12 +18,12 @@ function eig_cf(input::InputStruct, k::Union{Complex128,Float64,Int}; ncf::Int=1
 
     k²= k^2
 
-    ∇² = laplacian(k, input)
+    ∇² = laplacian(input, k)
 
-    N = input.N_ext; ε_sm = input.ε_sm; F_sm = input.F_sm
-    ɛk² = sparse(1:prod(N), 1:prod(N), ɛ_sm[:]*k²       , prod(N), prod(N), +)
-    sF  = sparse(1:prod(N), 1:prod(N), sign.(F.*F_sm[:]), prod(N), prod(N), +)
-    FF  = sparse(1:prod(N), 1:prod(N), abs.(F.*F_sm[:]) , prod(N), prod(N), +)
+    N = input.dis.N_PML; ε = input.sys.ε_PML; F1 = input.sys.F_PML
+    ɛk² = sparse(1:prod(N), 1:prod(N), ɛ[:]*k²       , prod(N), prod(N), +)
+    sF  = sparse(1:prod(N), 1:prod(N), sign.(F.*F1[:]), prod(N), prod(N), +)
+    FF  = sparse(1:prod(N), 1:prod(N), abs.(F.*F1[:]) , prod(N), prod(N), +)
 
     if isempty(u_init)
         (η,u,nconv,niter,nmult,resid) = eigs(-sF*(∇²+ɛk²)./k²,FF, which = :LM,
@@ -33,11 +34,11 @@ function eig_cf(input::InputStruct, k::Union{Complex128,Float64,Int}; ncf::Int=1
     end
 
     for ii = 1:ncf
-        u[:,ii] = u[:,ii]/sqrt( trapz( u[:,ii].*F.*F_sm[:].*u[:,ii], input.dx̄ ) )
+        u[:,ii] = u[:,ii]/sqrt( trapz( u[:,ii].*F.*F_sm[:].*u[:,ii], input.dx ) )
     end
 
     if truncate
-        return η,u[input.x̄_inds,:]
+        return η,u[input.dis.xy_inds,:]
     else
         return η,u
     end
@@ -48,14 +49,14 @@ function eig_cf(input::InputStruct, k::Union{Complex128,Float64,Int}, k_type::St
     truncate::Bool=false, direction::Array{Int,1}=[1,0])::
     Tuple{Array{Complex128,1},Array{Complex128,2}}
 
-    input1 = set_bc(input, k_type, direction)
+    input, bc_original = set_bc(input, k_type, direction)
 
     η, u = eig_cf(input1, k; ncf=ncf, F=F, η_init=η_init, u_init=u_init,
                     truncate=truncate)
+
+    reset_bc!(input, bc_original)
     return η, u
 end # end of function eig_cf with modified boundary
-
-
 
 function eig_k(input::InputStruct, k::Union{Complex128,Float64,Int};
     isLinear::Bool=true, nk::Int=1, F::Array{Float64,1}=[1.], truncate::Bool=false,
@@ -73,14 +74,16 @@ function eig_k(input::InputStruct, k::Union{Complex128,Float64,Int};
 end # end of function eig_k (wrapper for linear or nonlinear cf root finder)
 function eig_k(input::InputStruct, k::Union{Complex128,Float64,Int}, k_type::String;
     isLinear::Bool=true, nk::Int=1, F::Array{Float64,1}=[1.], truncate::Bool=false,
-    ψ_init::Array{Complex128,1}=Complex128[])::Tuple{Array{Complex128,1},Array{Complex128,2}}
+    ψ_init::Array{Complex128,1}=Complex128[], direction::Array{Int,1}=[1,0])::
+    Tuple{Array{Complex128,1},Array{Complex128,2}}
 
-    input1 = set_bc(input,k_type)
+    @time input, bc_original = set_bc(input,k_type, direction)
 
-    k, ψ = eig_k(input1, k; isLinear=isLinear, nk=nk, F=F, truncate=truncate, ψ_init=ψ_init)
+    @time k, ψ = eig_k(input, k; isLinear=isLinear, nk=nk, F=F, truncate=truncate, ψ_init=ψ_init)
+
+    @time reset_bc!(input, bc_original)
     return k, ψ
 end # end of function eig_k with modified boundary
-
 
 ################################################################################
 ####### LINEAR EIGENVALUE SOLVERS
@@ -88,7 +91,6 @@ end # end of function eig_k with modified boundary
 
 """
 k,ψ =  eig_kl(input, k; nk=1, F=[1.], truncate=false, ψ_init=[])
-
 k,ψ =  eig_kl(input, k, k_type; nk=1, F=[1.], truncate=false, ψ_init=[])
 
     Compute eigenfrequencies k w/o line pulling, according to boundary conditions
@@ -106,9 +108,9 @@ function eig_kl(input::InputStruct, K::Union{Complex128,Float64,Int}; nk::Int=1,
 
     k = complex(float(K))
 
-    ∇² = laplacian(k,input)
+    ∇² = laplacian(input, k)
 
-    N = prod(input.N_ext); ε_sm = input.ε_sm; D₀ = input.D₀; F_sm = input.F_sm
+    N = prod(input.dis.N_PML); ε_sm = input.sys.ε_PML; D₀ = input.tls.D₀; F_sm = input.sys.F_PML
     ɛ⁻¹ = sparse(1:N, 1:N, 1./(ɛ_sm[:]-1im*D₀.*F.*F_sm[:]), N, N, +)
     if isempty(ψ_init)
         (k²,ψ,nconv,niter,nmult,resid) = eigs(-ɛ⁻¹*∇²,which = :LM, nev = nk,
@@ -118,15 +120,15 @@ function eig_kl(input::InputStruct, K::Union{Complex128,Float64,Int}; nk::Int=1,
             sigma = k^2, v0 = ψ_init)
     end
 
-    r = input.r_ext; inds = input.x̄_inds
-    if length(F)>1
-        F_temp = F[r[inds]]
-    else
+    inds = input.dis.xy_inds
+    if length(F) == 1
         F_temp = F
+    else
+        F_temp = F[inds]
     end
 
-     for ii = 1:nk
-        ψ[:,ii] = ψ[:,ii]/sqrt( trapz((ɛ_sm[inds]-1im*D₀.*F_temp.*F_sm[inds]).*abs2.(ψ[inds,ii]), input.dx̄) )
+    for ii = 1:nk
+        ψ[:,ii] = ψ[:,ii]/sqrt( trapz( (ɛ_sm[inds]-1im*D₀.*F_temp[:].*F_sm[inds]).*abs2.(ψ[inds,ii]), input.dis.dx) )
     end
 
     if truncate
@@ -135,15 +137,6 @@ function eig_kl(input::InputStruct, K::Union{Complex128,Float64,Int}; nk::Int=1,
         return sqrt.(k²),ψ
     end
 end # end of function eig_kl (main)
-function eig_kl(input::InputStruct, k::Union{Complex128,Float64,Int64},
-    k_type::String; nk::Int=1, F::Array{Float64,1}=[1.], truncate::Bool=false,
-    ψ_init::Array{Complex128,1}=Complex128[], direction::Array{Int,1}=[1,0])::
-    Tuple{Array{Complex128,1},Array{Complex128,2}}
-
-    input1 = set_bc(input,k_type)
-    K, ψ = eig_kl(input1, k; nk=nk, F=F, truncate=truncate, ψ_init = ψ_init)
-end # end of function eig_kl with modified bc
-
 
 ################################################################################
 #### NONLINEAR EIGENVALUE SOLVERS
@@ -249,7 +242,7 @@ function eig_knl(input::InputStruct, kc::Union{Complex128,Float64,Int}, Radii::T
 
     k = complex(float(kc))
 
-    ∇² = laplacian(k,input)
+    ∇² = laplacian(input, k)
 
     N_ext = prod(input.N_ext)
     A  = zeros(Complex128,N_ext,nk)
@@ -356,4 +349,51 @@ rad(a,b,θ) is the complex radius as a function of angle for an ellipse with
 """
 function rad(a::Float64, b::Float64, θ::Float64)::Float64
     return b./sqrt.(sin(θ).^2+(b/a)^2.*cos(θ).^2)
+end
+
+function set_bc(input::InputStruct, k_type::String, direction::Array{Int,1})::
+    Tuple{InputStruct, Array{String, 1}}
+
+    bc_original = input.bnd.bc
+
+    if k_type ∈ ["Pole","pole","P","p"]
+        for i in 1:4
+            if input.bnd.bc[i] == "I"
+                input.bnd.bc[i] = "O"
+            end
+        end
+    elseif k_type ∈ ["Zero","zero","Z","z"]
+        for i in 1:4
+            if input.bnd.bc[i] == "O"
+                input.bnd.bc[i] = "I"
+            end
+        end
+    elseif k_type ∈ ["UZR","uzr","U","u"]
+        if (direction[1]==+1) && (input.bnd.bc[1:2] !== ["I", "O"])
+            input.bnd.bc[1] = "I"
+            input.bnd.bc[2] = "O"
+        elseif (direction[1]==-1) && (input1.bc[1:2] !== ["O", "I"])
+            input.bnd.bc[1] = "O"
+            input.bnd.bc[2] = "I"
+        end
+        if (direction[2]==+1) && (input1.bc[3:4] !== ["I", "O"])
+            input.bnd.bc[3] = "I"
+            input.bnd.bc[4] = "O"
+        elseif (direction[2]==-1) && (input1.bc[3:4] !== ["O", "I"])
+            input.bnd.bc[3] = "O"
+            input.bnd.bc[4] = "I"
+        end
+    end
+
+    input.bnd.bc_sig = prod(input.bnd.bc)
+
+    return input, bc_original
+end
+
+function reset_bc!(input::InputStruct,bc_original::Array{String,1})::InputStruct
+
+    input.bnd.bc = bc_original
+    input.bnd.bc_sig = prod(bc_original)
+
+    return input
 end
