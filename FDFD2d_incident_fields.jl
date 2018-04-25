@@ -37,7 +37,7 @@ function incident_mode(input::InputStruct, k::Complex128, m::Int)::
         kₓ = sqrt(k^2 - kᵤ^2)
         φ₊ = +exp(2L*imag(kₓ))*sqrt(1/real(kₓ))*exp(-1im*kₓ*x).*φy
         φ₋ = -exp(2L*imag(kₓ))*sqrt(1/real(kₓ))*exp(+1im*kₓ*x).*φy
-    elseif (bc_sig in ["OOOO", "IIII"]) && (!isempty(input.wgs))
+    elseif (bc_sig in ["OOOO", "IIII"]) && (!isempty(input.wgs.dir))
         # dielectric waveguide
         kₓ, φy = wg_transverse_y(input, k, m)
         L = input.bnd.ℓ[1]
@@ -80,11 +80,11 @@ function wg_transverse_y(input::InputStruct, k::Complex128, m::Int)::
     q = input.sct.channels[m].tqn
 
     wg_pos_ind = 3
-    ind = findmin(input.wgs[n].pos-input.dis.xy[2])[2] + wg_pos_ind
+    ind = findmin(input.wgs.pos[n]-input.dis.xy[2])[2] + wg_pos_ind
 
     N = input.dis.N_PML[2]
     k² = k^2
-    ε = input.wgs[n].ε_PML
+    ε = input.wgs.ε_PML[n]
     εk² = sparse(1:N, 1:N, ε[:]*k², N, N, +)
     ∇₁², ∇₂² = laplacians(input,k)
 

@@ -29,22 +29,22 @@ function analyze_output(input::InputStruct, k::Complex128,
         P = reshape(ψ[input.x̄_inds],input.N[1],:)[end,:]
         cm = sum(φ.*P)*input.dx̄[2]
         bm = -input.a[m]
-    elseif (bc_sig in ["OOOO", "IIII"]) && (!isempty(input.wgs))
-        if (input.wgs[input.sct.channels[m].wg].dir in ["x", "X"])
+    elseif (bc_sig in ["OOOO", "IIII"]) && (!isempty(input.wgs.dir))
+        if (input.wgs.dir[input.sct.channels[m].wg] in ["x", "X"])
             kₓ, φy = wg_transverse_y(input, k, m)
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
                 x = input.dis.xy[1][1] - input.bnd.∂R[1]
                 phs = exp.(+1im*kₓ*x)
                 P = reshape(ψ,input.dis.N_PML[1],:)[input.dis.dN_PML[1]+input.dis.N[1]-1,:]
-                ε = input.wgs[input.sct.channels[m].wg].ε_PML
+                ε = input.wgs.ε_PML[input.sct.channels[m].wg]
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
                 x = input.dis.xy[1][end] - input.bnd.∂R[2]
                 phs = exp.(-1im*kₓ*x)
                 P = reshape(ψ,input.dis.N_PML[1],:)[input.dis.dN_PML[1]+2,:]
-                ε = input.wgs[input.sct.channels[m].wg].ε_PML
+                ε = input.wgs.ε_PML[input.sct.channels[m].wg]
             end
             φ = reshape(φy,input.dis.N_PML[1],:)[input.dis.dN_PML[1]+2,:]
-        elseif input.wgs[input.sct.channels[m].wg].dir in ["y", "Y"]
+        elseif input.wgs.dir[input.sct.channels[m].wg] in ["y", "Y"]
             error("Haven't written vertical waveguide code yet.")
         end
 
@@ -64,25 +64,25 @@ cm = analyze_input(input, k, ψ, m)
 function analyze_input(input::InputStruct, k::Complex128,
     ψ::Array{Complex{Float64},1}, m::Int)::Complex128
 
-    bc_sig = input.bc_sig
+    bc_sig = input.bnd.bc_sig
 
     if bc_sig in ["Oddd", "Odnn", "Oddn", "Odnd"]
         error("Haven't written input analyzer for one-sided input in a waveguide")
     elseif bc_sig in ["dOdd", "dOnn", "dOdn", "dOnd"]
         error("Haven't written input analyzer for one-sided input in a waveguide")
-    elseif (bc_sig in ["OOOO", "IIII"]) && (!isempty(input.wgs))
-        if (input.wgs[input.sct.channels[m].wg].dir in ["x", "X"])
+    elseif (bc_sig in ["OOOO", "IIII"]) && (!isempty(input.wgs.dir))
+        if (input.wgs.dir[input.sct.channels[m].wg] in ["x", "X"])
             kₓ, φy = wg_transverse_y(input, k, m)
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
                 x = input.dis.xy[1][1] - input.bnd.∂R[1]
                 phs = exp.(-1im*kₓ*x)
                 P = reshape(ψ,input.dis.N_PML[1],:)[input.dis.dN_PML[1]+input.dis.N[1]-1,:]
-                ε = input.wgs[input.sct.channels[m].wg].ε_PML
+                ε = input.wgs.ε_PML[input.sct.channels[m].wg]
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
                 x = input.dis.xy[1][end] - input.bnd.∂R[2]
                 phs = exp.(+1im*kₓ*x)
                 P = reshape(ψ,input.dis.N_PML[1],:)[input.dis.dN_PML[1]+2,:]
-                ε = input.wgs[input.sct.channels[m].wg].ε_PML
+                ε = input.wgs.ε_PML[input.sct.channels[m].wg]
             end
             φ = reshape(φy,input.dis.N_PML[1],:)[input.dis.dN_PML[1]+2,:]
         elseif input.wgs.dir[input.channels[m].wg] in ["y", "Y"]
