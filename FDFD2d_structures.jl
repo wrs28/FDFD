@@ -175,18 +175,18 @@ wgs = WaveguideStruct()
 wgs = WaveguideStruct(wgd,wgp,wgt,wgn)
 """
 mutable struct WaveguideStruct
-    dir::String
-    pos::Float64
-    wdt::Float64
-    ind::Float64
-    ε::Array{Complex128,1}
-    ε_PML::Array{Complex128,1}
+    dir::Array{String,1}
+    pos::Array{Float64}
+    wdt::Array{Float64}
+    ind::Array{Float64}
+    ε::Array{Array{Complex128,1}}
+    ε_PML::Array{Array{Complex128,1}}
 
     function WaveguideStruct()::WaveguideStruct
-        return new("", 0., 0., 1.,complex([NaN]),complex([NaN]))
+        return new(String[], Float64[], Float64[], Float64[], [Complex128[]], [Complex128[]])
     end
-    function WaveguideStruct(dir::String, pos::Float64, wdt::Float64, ind::Float64)::WaveguideStruct
-        return new(dir, pos, wdt, ind, complex([NaN]), complex([NaN]))
+    function WaveguideStruct(dir::Array{String,1}, pos::Array{Float64,1}, wdt::Array{Float64,1}, ind::Array{Float64,1})::WaveguideStruct
+        return new(dir, pos, wdt, ind, [Complex128[]], [Complex128[]])
     end
     function WaveguideStruct(wgs::WaveguideStruct)::WaveguideStruct
         return WaveguideStruct(wgs.dir, wgs.pos, wgs.wdt, wgs.ind)
@@ -202,9 +202,11 @@ mutable struct InputStruct
     dis::DiscretizationStruct
     sct::ScatteringStruct
     tls::TwoLevelSystemStruct
-    wgs::Array{WaveguideStruct,1}
+    wgs::WaveguideStruct
 
-    function InputStruct(sys, bnd, dis, sct, tls, wgs)
+    function InputStruct(sys::SystemStruct, bnd::BoundaryStruct,
+        dis::DiscretizationStruct, sct::ScatteringStruct,
+        tls::TwoLevelSystemStruct, wgs::WaveguideStruct)::InputStruct
 
         # define discretization parameters and PML parameters
         N = dis.N
@@ -267,9 +269,9 @@ mutable struct InputStruct
         F_vals = sys.F_vals
         F_inds = sys.F_inds
 
-        n = vcat([wgs[m].ind for m in 1:length(wgs)], n₁_vals[n₁_inds] + 1.0im*n₂_vals[n₂_inds])
+        n = vcat([wgs.ind[m] for m in 1:length(wgs.ind)], n₁_vals[n₁_inds] + 1.0im*n₂_vals[n₂_inds])
         ε = n.^2
-        F = vcat(zeros(Float64,length(wgs)), F_vals[F_inds])
+        F = vcat(zeros(Float64,length(wgs.dir)), F_vals[F_inds])
         F[iszero.(F)] = TwoLevelSystemDefaults()
         sys.n = n
         sys.ε = ε
@@ -288,25 +290,25 @@ mutable struct InputStruct
         F_PML = hcat(temp[:,1]*ones(1,dN_PML[3]), temp, temp[:,end]*ones(1,dN_PML[4]))
         sys.F_PML = F_PML
 
-        for w in 1:length(wgs)
-            wgs[w].ε = sub_pixel_smoothing(wgs[w], dis)
-            if wgs[w].dir == "x"
-                wgs[w].ε_PML = vcat(wgs[w].ε[1]*ones(Float64,dN_PML[3]),wgs[w].ε,wgs[w].ε[end]*ones(Float64,dN_PML[4]))
-            elseif wgs[w].dir == "y"
-                wgs[w].ε_PML = vcat(wgs[w].ε[1]*ones(Float64,dN_PML[1]),wgs[w].ε,wgs[w].ε[end]*ones(Float64,dN_PML[2]))
+        for wg in 1:length(wgs.dir)
+            wgs.ε[wg] = sub_pixel_smoothing(wgs, wg, dis)
+            if wgs.dir[wg] == "x"
+                wgs.ε_PML[wg] = vcat(wgs.ε[wg][1]*ones(Float64,dN_PML[3]),wgs.ε[wg],wgs.ε[wg][end]*ones(Float64,dN_PML[4]))
+            elseif wgs.dir[wg] == "y"
+                wgs.ε_PML[wg] = vcat(wgs.ε[wg][1]*ones(Float64,dN_PML[1]),wgs.ε[wg],wgs.ε[wg][end]*ones(Float64,dN_PML[2]))
             end
         end
 
         temp = zeros(Complex128, N[1], N[2])
         sct.ε₀ = zeros(Complex128, N[1], N[2])
-        for w in 1:length(wgs)
-            if wgs[w].dir=="x"
-                temp += repeat(transpose(wgs[w].ε);inner=(N[1],1))
-            elseif waveguides[w].dir=="y"
-                temp += wgs[w].ε*ones(1,N[2])
+        for wg in 1:length(wgs.dir)
+            if wgs.dir[wg]=="x"
+                temp += repeat(transpose(wgs.ε[wg]);inner=(N[1],1))
+            elseif wgs.dir[wg]=="y"
+                temp += wgs.ε[wg]*ones(1,N[2])
             end
         end
-        sct.ε₀ = temp .- length(wgs) .+ 1
+        sct.ε₀ = temp .- length(wgs.dir) .+ 1
         # temp = vcat(ones(dN_PML[1],1)*transpose(ε_sm[1,:]), sct.ε₀, ones(dN_PML[2],1)*transpose(ε_sm[end,:]))
         # sct.ε₀_PML = hcat(temp[:,1]*ones(1,dN_PML[3]), temp, temp[:,end]*ones(1,dN_PML[4]))
         ε_temp = vcat(repmat(transpose(sct.ε₀[1,:]),dN_PML[1],1), sct.ε₀, repmat(transpose(sct.ε₀[1,:]),dN_PML[2],1))
@@ -323,7 +325,7 @@ end # end of struct InputStruct
 r = which_region(XY, system, waveguides, discretization)
 """
 function which_region(xy::Tuple{Array{Float64,1},Array{Float64,1}}, sys::SystemStruct,
-    wgs::Array{WaveguideStruct,1}, dis::DiscretizationStruct)::Array{Int,2}
+    wgs::WaveguideStruct, dis::DiscretizationStruct)::Array{Int,2}
 
     x = xy[1]
     y = xy[2]
@@ -333,16 +335,16 @@ function which_region(xy::Tuple{Array{Float64,1},Array{Float64,1}}, sys::SystemS
     regions = zeros(Int,length(x),length(y))
 
     for i in 1:length(x), j in 1:length(y)
-        regions[i,j] = length(wgs) + geometry(x[i], y[j], geoParams)
-        for w in 1:length(wgs)
-            if wgs[w].dir in ["x", "X"]
+        regions[i,j] = length(wgs.dir) + geometry(x[i], y[j], geoParams)
+        for w in 1:length(wgs.dir)
+            if wgs.dir[w] in ["x", "X"]
                 p = y[j]
-            elseif wgs[w].dir in ["y", "Y"]
+            elseif wgs.dir[w] in ["y", "Y"]
                 p = x[i]
             else
                 error("Invalid waveguide direction.")
             end
-            if wgs[w].pos-wgs[w].wdt/2 < p < wgs[w].pos+wgs[w].wdt/2
+            if wgs.pos[w]-wgs.wdt[w]/2 < p < wgs.pos[w]+wgs.wdt[w]/2
                 regions[i,j] = w
             end
         end
@@ -352,7 +354,7 @@ end
 """
 r = which_region(system, waveguides, discretization)
 """
-function which_region(sys::SystemStruct, wgs::Array{WaveguideStruct,1}, dis::DiscretizationStruct)::Array{Int,2}
+function which_region(sys::SystemStruct, wgs::WaveguideStruct, dis::DiscretizationStruct)::Array{Int,2}
     xy = (dis.xy[1], dis.xy[2])
     regions = which_region(xy, sys, wgs, dis)
     return regions
@@ -360,22 +362,22 @@ end
 """
 r = which_region(X, waveguide, discretization)
 """
-function which_region(x::Array{Float64,1}, wg::WaveguideStruct, dis::DiscretizationStruct)::Array{Int,1}
+function which_region(x::Array{Float64,1}, wgs::WaveguideStruct, wg::Int, dis::DiscretizationStruct)::Array{Int,1}
     regions = 2*ones(Int,length(x))
-    wg_bool = wg.pos-wg.wdt/2 .< x .< wg.pos+wg.wdt/2
-    regions[wg_bool] = 1
+    wgs_bool = wgs.pos[wg]-wgs.wdt[wg]/2 .< x .< wgs.pos[wg]+wgs.wdt[wg]/2
+    regions[wgs_bool] = 1
     return regions
 end
 """
 r = which_region(waveguide, discretization)
 """
-function which_region(wg::WaveguideStruct, dis::DiscretizationStruct)::Array{Int,1}
-    if wg.dir == "x"
+function which_region(wgs::WaveguideStruct, wg::Int, dis::DiscretizationStruct)::Array{Int,1}
+    if wgs.dir[wg] == "x"
         x = dis.xy[2]
-    elseif wg.dir == "y"
+    elseif wgs.dir[wg] == "y"
         x = dis.xy[1]
     end
-    regions = which_region(x, wg, dis)
+    regions = which_region(x, wgs, wg, dis)
     return regions
 end # end of function which_region
 
@@ -383,7 +385,7 @@ end # end of function which_region
 """
 ε_sm, F_sm = sub_pixel_smoothing(system)
 """
-function sub_pixel_smoothing(sys::SystemStruct, wgs::Array{WaveguideStruct,1},
+function sub_pixel_smoothing(sys::SystemStruct, wgs::WaveguideStruct,
     dis::DiscretizationStruct)::Tuple{Array{Complex128,2},Array{Float64,2}}
 
     x = dis.xy[1]
@@ -428,17 +430,17 @@ function sub_pixel_smoothing(sys::SystemStruct, wgs::Array{WaveguideStruct,1},
 
     return ɛ_sm, F_sm
 end
-function sub_pixel_smoothing(wg::WaveguideStruct, dis::DiscretizationStruct)::Array{Complex128,1}
+function sub_pixel_smoothing(wgs::WaveguideStruct, wg::Int, dis::DiscretizationStruct)::Array{Complex128,1}
 
-    if wg.dir == "x"
+    if wgs.dir[wg] == "x"
         x = dis.xy[2]
-    elseif wg.dir == "y"
+    elseif wgs.dir[wg] == "y"
         x = dis.xy[1]
     end
     sub_pixel_num = dis.sub_pixel_num
 
-    r = which_region(wg, dis)
-    ε = complex([wg.ind^2,1.])
+    r = which_region(wgs, wg, dis)
+    ε = complex([wgs.ind[wg]^2,1.])
 
     ɛ_sm = ɛ[r]
 
@@ -453,7 +455,7 @@ function sub_pixel_smoothing(wg::WaveguideStruct, dis::DiscretizationStruct)::Ar
 
             X = Array(linspace(x_min,x_max,sub_pixel_num))
 
-            sub_regions = which_region(X, wg, dis)
+            sub_regions = which_region(X, wgs, wg, dis)
             ɛ_sm[i] = mean(ɛ[sub_regions])
         end
     end
@@ -463,21 +465,21 @@ end
 # ################################################################################
 # ##### SYSTEM MODIFICATION
 # ################################################################################
-(export update_input!)
+export update_input
 
 """
-update_input!(input, field, value)
-update_input!(input, fields, values)
+update_input(input, field, value)
+update_input(input, fields, values)
 
     If changes were made to the ∂R, N, k₀, k, F, ɛ, Γ, bc, a, b, run update_input to
     propagate these changes through the system.
 """
-function update_input!(input::InputStruct, fields::Array{Symbol,1}, values::Any)::InputStruct
+function update_input(input::InputStruct, fields::Array{Symbol,1}, values::Any)::InputStruct
 
-    for m in 1:length(fields)
-        f = fieldnames(input)
-        for i in 1:length(f)
-            g = fieldnames(getfield(input,f[i]))
+    f = fieldnames(input)
+    for i in 1:length(f)
+        g = fieldnames(getfield(input,f[i]))
+        for m in 1:length(fields)
             if fields[m] in g
                 setfield!(getfield(input,f[i]),fields[m],values[m])
             end
@@ -495,26 +497,35 @@ function update_input!(input::InputStruct, fields::Array{Symbol,1}, values::Any)
         flag[i] = fields[i] in [:∂R, :N, :bc, :F_inds, :F_vals, :n₁_vals, :n₂_vals, :n₁_inds,
                         :n₂_inds, :ind, :wdt, :pos, :dir, :sub_pixel_num, :geoParams]
     end
+
     if any(flag)
         sys = SystemStruct(input.sys)
         bnd = BoundaryStruct(input.bnd)
         dis = DiscretizationStruct(input.dis)
         sct = ScatteringStruct(input.sct)
         tls = TwoLevelSystemStruct(input.tls)
-        wgs = [WaveguideStruct(input.wgs[m]) for m in 1:length(input.wgs)]
+        wgs = WaveguideStruct(input.wgs)
         input = InputStruct(sys, bnd, dis, sct, tls, wgs)
     end
 
     return input
 end # end of function update_input
-function update_input!(input::InputStruct, field::Symbol, value::Any)::InputStruct
-    update_input!(input,[field],[value])
+function update_input(input::InputStruct, field::Symbol, value::Any)::InputStruct
+    input = update_input(input,[field],[value])
     return input
 end # end of function update_input
-function update_input!(input::InputStruct, field::Symbol, ind::Int, value::Any)::InputStruct
-    temp = getfield!(input,field)
-    temp[ind] = value
-    update_input!(input,[field],[value])
+function update_input(input::InputStruct, field::Symbol, ind::Int, value::Any)::InputStruct
+
+    f = fieldnames(input)
+    for i in 1:length(f)
+        g = fieldnames(getfield(input,f[i]))
+        if field in g
+            temp = getfield(getfield(input,f[i]),field)
+            temp[ind] = value
+            input = update_input(input,field,temp)
+        end
+    end
+
     return input
 end # end of function update_input
 

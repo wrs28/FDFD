@@ -1,7 +1,7 @@
 ################################################################################
 ### Linear Eigenvalue, Embarrassingly Parallel over Parameter Space
 ################################################################################
-
+export eig_kl
 
 function eig_kl(input::InputStruct, k::Union{Complex128,Float64,Int},
     fields::Array{Symbol,1}, field_inds::Array{Int,1}, params::Array{Array{Float64,1},1};
@@ -22,9 +22,9 @@ end  # end of function eig_kl, parallel computation over parameters
 function eig_kl(input::InputStruct, k::Union{Complex128,Float64,Int}, k_type::String,
     fields::Array{Symbol,1}, field_inds::Array{Int,1}, params::Array{Array{Float64,1},1};
     nk::Int=1, F::Array{Float64,1}=[1.], truncate::Bool=false,
-    ψ_init::Array{Complex128,1}=Complex128[])::Tuple{SharedArray,Channel}
+    ψ_init::Array{Complex128,1}=Complex128[], direction::Array{Int,1}=[1,0])::Tuple{SharedArray,Channel}
 
-    input1 = set_bc(input,k_type)
+    input1 = set_bc(input, k_type, direction)
 
     K,r = eig_kl(input1, k, fields, field_inds, params; nk=nk, F=F,
                 truncate=truncate, ψ_init=ψ_init)
@@ -41,9 +41,9 @@ function eig_klp!(K::SharedArray, input::InputStruct, k::Complex128,
             if !isempty(size(getfield(input,fields[f])))
                 vals_temp = getfield(input,fields[f])
                 vals_temp[field_inds[f]] = field_vals[f][subs[f][i]]
-                updateInputs!(input,fields[f],vals_temp)
+                input = update_input(input,fields[f],vals_temp)
             else
-                updateInputs!(input,fields[f],field_vals[f][subs[f][i]])
+                input = update_input(input,fields[f],field_vals[f][subs[f][i]])
             end
         end
 
@@ -85,16 +85,27 @@ function eig_kl(input::InputStruct, k::Array{Complex128,1},
     K = SharedArray{Complex128}(dims)
     ψ = Complex128[]
 
+    f = fieldnames(input)
+    top_field = copy(fields)
+    for i in 1:length(f)
+        g = fieldnames(getfield(input,f[i]))
+        for m in 1:length(fields)
+            if fields[m] in g
+                top_field[m] = f[i]
+            end
+        end
+    end
+
     input1 = deepcopy(input)
     for i in 1:nk
-            if !isempty(size(getfield(input1,fields[1])))
-                vals_temp = getfield(input1,fields[1])
+            if !isempty(size( getfield( getfield(input1,top_field[1]) , fields[1]) ))
+                vals_temp = getfield( getfield(input1, top_field[1]) , fields[1])
                 vals_temp[field_inds[1]] = field_vals[1][1]
-                updateInputs!(input1,fields[1],vals_temp)
+                input1 = update_input(input1,fields[1],vals_temp)
             else
-                updateInputs!(input1,fields[1],field_vals[1][1])
+                input1 = update_input(input1,fields[1],field_vals[1][1])
             end
-                k_temp, ψ_temp = eigKL(input1, k[i]; nk=1, F=F, truncate=truncate, ψ_init=ψ_init)
+                k_temp, ψ_temp = eig_k(input1, k[i]; nk=1, F=F, truncate=truncate, ψ_init=ψ_init)
                 K[i,1,ones(Int64,ndims(K)-2)...] = k_temp[1]
                 ψ = ψ_temp[:,1]
     end
@@ -112,7 +123,7 @@ function eig_kl(input::InputStruct, k::Array{Complex128,1},
         else
 
             for p in procs(K)
-                @async put!(r,remotecall_fetch(eigKLp!, p, K, input, fields, field_inds,
+                @async put!(r,remotecall_fetch(eig_klp!, p, K, input, fields, field_inds,
                                         field_vals, d, F, truncate, ψ_init))
             end
         end
@@ -123,20 +134,36 @@ end # end of function eig_kl, bootstrapped parallel computation over parameters
 function eig_kl(input::InputStruct, k::Array{Complex128,1}, k_type::String,
     fields::Array{Symbol,1}, field_inds::Array{Int,1}, field_vals::Array{Array{Float64,1},1};
     F::Array{Float64,1}=[1.], truncate::Bool=true,
-    ψ_init::Array{Complex128,1}=Complex128[], dispOpt::Bool=true)::
+    ψ_init::Array{Complex128,1}=Complex128[], dispOpt::Bool=true,  direction::Array{Int,1}=[1,0])::
     Tuple{SharedArray,Channel}
 
-    input1 = set_bc(input,k_type)
+    input, bc_original = set_bc(input,k_type, direction)
 
-    K, r = eigKL(input1, k, fields, field_inds, field_vals; F=F,
+    K, r = eig_kl(input, k, fields, field_inds, field_vals; F=F,
         truncate=truncate, ψ_init=ψ_init, dispOpt=dispOpt)
+
+    reset_bc!(input, bc_original)
+
+    return K, r
 end # end of function eig_kl, bootstrapped parallel computation over parameters with modified boundaries
-function eigKLp!(K::SharedArray, input::InputStruct,
+function eig_klp!(K::SharedArray, input::InputStruct,
     fields::Array{Symbol,1}, field_inds::Array{Int,1}, field_vals::Array{Array{Float64,1},1},
     dim::Int64, F::Array{Float64,1}, truncate::Bool, ψ_init::Array{Complex128,1})
 
     inds = p_range(K,dim)
     subs = ind2sub(size(K)[1:dim-1],inds)
+
+    f = fieldnames(input)
+    top_field = copy(fields)
+    for i in 1:length(f)
+        g = fieldnames(getfield(input,f[i]))
+        for m in 1:length(fields)
+            if fields[m] in g
+                top_field[m] = f[i]
+            end
+        end
+    end
+
     for d in 2:size(K,dim)
         for i in 1:length(inds)
             for f in 1:length(fields)
@@ -147,12 +174,12 @@ function eigKLp!(K::SharedArray, input::InputStruct,
                 else
                     val_ind = 1
                 end
-                if !isempty(size(getfield(input,fields[f])))
-                    vals_temp = getfield(input,fields[f])
+                if !isempty(size( getfield( getfield(input, top_field[f]) , fields[f]) ))
+                    vals_temp = getfield(getfield(input,top_field[f]),fields[f])
                     vals_temp[field_inds[f]] = field_vals[f][val_ind]
-                    updateInputs!(input,fields[f],vals_temp)
+                    input = update_input(input,fields[f],vals_temp)
                 else
-                    updateInputs!(input,fields[f],field_vals[f][val_ind])
+                    input = update_input(input,fields[f],field_vals[f][val_ind])
                 end
             end
             k_temp, ψ = eig_kl(input, K[[subs[j][i] for j in 1:length(subs)]..., d-1, ones(Int64,ndims(K)-dim)...]; nk=1, F=F, truncate=truncate, ψ_init=ψ_init)
@@ -288,9 +315,9 @@ end # end of eig_knlp, contour integral parallel
 function eig_knlp(input::InputStruct, kc::Union{Complex128,Float64,Int},
     Radii::Tuple{Float64,Float64}, k_type::String;
     nk::Int=3, Nq::Int=100, F::Array{Float64,1}=[1.],
-    R_min::Float64=.01, rank_tol::Float64=1e-8)::Array{Complex128,1}
+    R_min::Float64=.01, rank_tol::Float64=1e-8, direction::Array{Int,1}=[1,0])::Array{Complex128,1}
 
-    input1 = set_bc(input,k_type)
+    input1 = set_bc(input,k_type, direction)
 
     k = eig_knlp(input1, kc, Radii; nk=nk, Nq=Nq, F=F, R_min=R_min, rank_tol=rank_tol)
 end # end of eig_knlp, contour integral parallel with modified boundary

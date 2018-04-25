@@ -235,7 +235,6 @@ function eig_knl(input::InputStruct, k_init::Union{Complex128,Float64,Int}, k_ty
 end # end of function eig_knl, nonlinear cf rootfinder with modified boundaries
 
 
-
 function eig_knl(input::InputStruct, kc::Union{Complex128,Float64,Int}, Radii::Tuple{Float64,Float64};
     nk::Int=3, Nq::Int=100, F::Array{Float64,1}=[1.], R_min::Float64=.01,
     rank_tol::Float64=1e-8)::Array{Complex{Float64},1}

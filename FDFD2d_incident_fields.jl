@@ -92,13 +92,15 @@ function wg_transverse_y(input::InputStruct, k::Complex128, m::Int)::
 
     nev = 4 + 2*q
     kₓ²,φ = eigs(∇₂²+εk², nev=nev, sigma=k_scale*k², which = :LM)
-    perm = sortperm(kₓ²; by = x -> real(sqrt.(x)), rev=true)
-    φ_temp = φ[:,perm[q]]
+    perm1 = sortperm(kₓ²; by = x -> imag(sqrt.(x)), rev=false)
+    perm2 = sortperm(kₓ²[perm1[1:q]]; by = x -> real(sqrt.(x)), rev=true)
+    perm = perm1[(1:q)[perm2[1]]]
+    φ_temp = φ[:,perm]
     φ_temp = φ_temp*( conj(φ_temp[ind])/abs(φ_temp[ind]) ) #makes field positive at wg_pos_ind
 
     φy = repeat(transpose(φ_temp); outer=(input.dis.N_PML[1],1))[:]
     φy = φy/sqrt(sum(φ_temp.*ε.*φ_temp)*input.dis.dx[2])
-    return (sqrt.(kₓ²[ perm[q] ]), φy)
+    return (sqrt.(kₓ²[perm]), φy)
 end # end of function wg_transverse_y
 
 

@@ -13,7 +13,8 @@ include("FDFD2d_scattering.jl")
 include("FDFD2d_incident_fields.jl")
 include("FDFD2d_smatrix.jl")
 include("FDFD2d_scattering_analysis.jl")
-# include("FDFD2d_eigensolvers.jl")
+include("FDFD2d_eigensolvers.jl")
+include("FDFD2d_parallel.jl")
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 end #end of module FDFD2d
