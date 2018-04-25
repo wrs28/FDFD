@@ -4,16 +4,16 @@ export smatrix, smatrix_p
 ### S-MATRIX MAIN ROUTINES
 ################################################################################
 """
-S =  smatrix(input, k; channels, isNonLinear, F, dispOpt, fileName, N, N_Type, ψ_init = [])
+S =  smatrix(input, k; channels, isNonLinear, F, dispOpt, fileName, N, N_type, ψ_init = [])
     N is the number of steps to go from D0 = 0 to given D0
 """
 function smatrix(input::InputStruct, k::Union{Complex128,Float64,Int};
     channels::Array{Int,1}=Array(1:length(input.sct.channels)),
     isNonLinear::Bool=false, F::Array{Float64,1}=[1.], dispOpt::Bool=true,
-    fileName::String = "", N::Int=1, N_Type::String="D",
+    fileName::String = "", N::Int=1, N_type::String="D",
     ψ_init::Array{Complex128,1}=Complex128[])::Array{Complex128}
 
-    K = [complex(float(k))]
+    K = [k]
     S = smatrix(input, K; channels=channels, isNonLinear=isNonLinear, F=F,
                 dispOpt=dispOpt, fileName=fileName, N=N, N_type=N_type,
                 ψ_init=ψ_init)
@@ -23,13 +23,13 @@ end
 function smatrix(input::InputStruct, k::Union{Array{Complex128,1},Array{Float64,1},Array{Int,1}};
     channels::Array{Int,1}=Array(1:length(input.sct.channels)), isNonLinear::Bool=false,
     F::Array{Float64,1}=[1.], dispOpt::Bool=true, fileName::String = "",
-    N::Int=1, N_Type::String="D", ψ_init::Array{Complex128,1}=Complex128[])::Array{Complex128}
+    N::Int=1, N_type::String="D", ψ_init::Array{Complex128,1}=Complex128[])::Array{Complex128}
 
     if !isNonLinear
         S = smatrix_l(input, k; channels=channels, F=F, dispOpt=dispOpt,
                         fileName=fileName)
     else
-        S = smatrix_nl(input, k; channels=channels, N=N, N_Type=N_Type,
+        S = smatrix_nl(input, k; channels=channels, N=N, N_type=N_type,
                         isNonLinear=isNonLinear, F=F, dispOpt=dispOpt,
                         ψ_init=ψ_init, fileName=fileName)
     end
@@ -44,7 +44,7 @@ S = smatrix_p(input, k; channels, isNonLinear, F, dispOpt, fileName, N, N_type, 
 function smatrix_p(input::InputStruct, k::Union{Complex128,Float64,Int};
     channels::Array{Int,1}=Array(1:length(input.sct.channels)),
     isNonLinear::Bool=false, F::Array{Float64,1}=[1.], dispOpt::Bool=true,
-    fileName::String = "", N::Int=1, N_Type::String="D",
+    fileName::String = "", N::Int=1, N_type::String="D",
     ψ_init::Array{Complex128,1}=Complex128[], num_blocks::Int=3)::
     Tuple{SharedArray{Complex128},Channel}
 
@@ -58,14 +58,14 @@ end
 function smatrix_p(input::InputStruct, k::Union{Array{Complex128,1},Array{Float64,1},Array{Int,1}};
     channels::Array{Int,1}=Array(1:length(input.sct.channels)), isNonLinear::Bool=false,
     F::Array{Float64,1}=[1.], dispOpt::Bool=true, fileName::String = "", N::Int=1,
-    N_Type::String="D", ψ_init::Array{Complex128,1}=Complex128[], num_blocks::Int=3)::
+    N_type::String="D", ψ_init::Array{Complex128,1}=Complex128[], num_blocks::Int=3)::
     Tuple{SharedArray{Complex128},Channel}
 
     if !isNonLinear
         S, r = smatrix_lp(input, k; channels=channels, F=F, dispOpt=dispOpt,
                         fileName=fileName, num_blocks=num_blocks)
     else
-        S, r = smatrix_nlp(input, k; channels=channels, N=N, N_Type=N_Type,
+        S, r = smatrix_nlp(input, k; channels=channels, N=N, N_type=N_type,
                         isNonLinear=isNonLinear, F=F, dispOpt=dispOpt,
                         ψ_init=ψ_init, fileName=fileName, num_blocks=num_blocks)
     end
@@ -197,13 +197,13 @@ end # end of function smatrix_lp!
 ### S-MATRIX NONLINEAR ROUTINES
 ################################################################################
 """
-S =  smatrix_nl(input::InputStruct; N=10, N_Type="D", isNonLinear=false, F=1.,
+S =  smatrix_nl(input::InputStruct; N=10, N_type="D", isNonLinear=false, F=1.,
     dispOpt = true, ψ_init = [], fileName = "")
 
     N is the number of steps to go from D0 = 0 to given D0
 """
 function smatrix_nl(input1::InputStruct, k::Array{Complex128,1};
-    N::Int=1, N_Type::String="D", isNonLinear::Bool=false, F::Array{Float64,1}=[1.],
+    N::Int=1, N_type::String="D", isNonLinear::Bool=false, F::Array{Float64,1}=[1.],
     dispOpt::Bool=true, ψ_init::Array{Complex128,1}=Complex128[],
     fileName::String = "")::Array{Complex128,4}
 
@@ -256,9 +256,9 @@ function smatrix_nl(input1::InputStruct, k::Array{Complex128,1};
 
             for j in 1:N
 
-                if N_Type == "D"
+                if N_type == "D"
                     updateInputs!(input, :D₀, D[j])
-                elseif N_Type == "A"
+                elseif N_type == "A"
                     updateInputs!(input, :a, A_vec[j]*A)
                 end
 
