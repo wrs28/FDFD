@@ -97,9 +97,10 @@ function wg_transverse_y(input::InputStruct, k::Complex128, m::Int)::
     perm = perm1[(1:q)[perm2[1]]]
     φ_temp = φ[:,perm]
     φ_temp = φ_temp*( conj(φ_temp[ind])/abs(φ_temp[ind]) ) #makes field positive at wg_pos_ind
+    φ_temp = φ_temp./sqrt(sum(abs2.(φ_temp).*ε)*input.dis.dx[2])
 
     φy = repeat(transpose(φ_temp); outer=(input.dis.N_PML[1],1))[:]
-    φy = φy/sqrt(sum(φ_temp.*ε.*φ_temp)*input.dis.dx[2])
+
     return (sqrt.(kₓ²[perm]), φy)
 end # end of function wg_transverse_y
 
