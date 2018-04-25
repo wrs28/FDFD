@@ -316,6 +316,10 @@ mutable struct InputStruct
 
         return new(sys, bnd, dis, sct, tls, wgs)
     end
+    function InputStruct(input::InputStruct::InputStruct
+        input = InputStruct(input.sys,input.bnd,input.dis,input.sct,input.tls,input.wgs)
+        return input
+    end
 end # end of struct InputStruct
 
 # ################################################################################
