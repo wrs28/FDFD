@@ -26,10 +26,10 @@ function smatrix(input::InputStruct, k::Union{Array{Complex128,1},Array{Float64,
     N::Int=1, N_type::String="D", ψ_init::Array{Complex128,1}=Complex128[])::Array{Complex128}
 
     if !isNonLinear
-        S = smatrix_l(input, k; channels=channels, F=F, dispOpt=dispOpt,
+        S = smatrix_l(input, complex(k); channels=channels, F=F, dispOpt=dispOpt,
                         fileName=fileName)
     else
-        S = smatrix_nl(input, k; channels=channels, N=N, N_type=N_type,
+        S = smatrix_nl(input, complex(k); channels=channels, N=N, N_type=N_type,
                         isNonLinear=isNonLinear, F=F, dispOpt=dispOpt,
                         ψ_init=ψ_init, fileName=fileName)
     end
@@ -42,30 +42,29 @@ S = smatrix_p(input, k; channels, isNonLinear, F, dispOpt, fileName, N, N_type, 
     PARALLEL
 """
 function smatrix_p(input::InputStruct, k::Union{Complex128,Float64,Int};
-    channels::Array{Int,1}=Array(1:length(input.sct.channels)),
     isNonLinear::Bool=false, F::Array{Float64,1}=[1.], dispOpt::Bool=true,
     fileName::String = "", N::Int=1, N_type::String="D",
     ψ_init::Array{Complex128,1}=Complex128[], num_blocks::Int=3)::
     Tuple{SharedArray{Complex128},Channel}
 
-    K = [complex(float(k))]
-    S, r = smatrix_p(input, K; channels=channels, isNonLinear=isNonLinear, F=F,
+    K = [k]
+    S, r = smatrix_p(input, K; isNonLinear=isNonLinear, F=F,
                 dispOpt=dispOpt, fileName=fileName, N=N, N_type=N_type,
                 ψ_init=ψ_init, num_blocks=num_blocks)
 
     return S, r
 end
 function smatrix_p(input::InputStruct, k::Union{Array{Complex128,1},Array{Float64,1},Array{Int,1}};
-    channels::Array{Int,1}=Array(1:length(input.sct.channels)), isNonLinear::Bool=false,
+    isNonLinear::Bool=false,
     F::Array{Float64,1}=[1.], dispOpt::Bool=true, fileName::String = "", N::Int=1,
     N_type::String="D", ψ_init::Array{Complex128,1}=Complex128[], num_blocks::Int=3)::
     Tuple{SharedArray{Complex128},Channel}
 
     if !isNonLinear
-        S, r = smatrix_lp(input, k; channels=channels, F=F, dispOpt=dispOpt,
+        S, r = smatrix_lp(input, complex(k); F=F, dispOpt=dispOpt,
                         fileName=fileName, num_blocks=num_blocks)
     else
-        S, r = smatrix_nlp(input, k; channels=channels, N=N, N_type=N_type,
+        S, r = smatrix_nlp(input, complex(k); N=N, N_type=N_type,
                         isNonLinear=isNonLinear, F=F, dispOpt=dispOpt,
                         ψ_init=ψ_init, fileName=fileName, num_blocks=num_blocks)
     end
