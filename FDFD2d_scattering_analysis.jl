@@ -35,15 +35,15 @@ function analyze_output(input::InputStruct, k::Complex128,
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
                 x = input.dis.xy[1][1] - input.bnd.∂R[1]
                 phs = exp.(+1im*kₓ*x)
-                P = reshape(ψ,input.dis.N_PML[1],:)[input.dis.dN_PML[1]+input.dis.N[1]-1,:]
+                P = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
                 ε = input.wgs.ε_PML[input.sct.channels[m].wg]
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
                 x = input.dis.xy[1][end] - input.bnd.∂R[2]
                 phs = exp.(-1im*kₓ*x)
-                P = reshape(ψ,input.dis.N_PML[1],:)[input.dis.dN_PML[1]+2,:]
+                P = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
                 ε = input.wgs.ε_PML[input.sct.channels[m].wg]
             end
-            φ = reshape(φy,input.dis.N_PML[1],:)[input.dis.dN_PML[1]+2,:]
+            φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]
         elseif input.wgs.dir[input.sct.channels[m].wg] in ["y", "Y"]
             error("Haven't written vertical waveguide code yet.")
         end
