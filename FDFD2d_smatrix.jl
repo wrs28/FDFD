@@ -162,7 +162,7 @@ function smatrix_lp(input::InputStruct, k::Array{Complex128,1};
 
         if idx == 0 || idx > nchunks*mchunks # This worker is not assigned a piece
             a_inds = Array(1:0)
-            k_inds = 1:0
+            k_inds = Array(1:0)
         else
             ncsplits = [round(Int, s) for s in linspace(0, nc, nchunks+1)]
             nksplits = [round(Int, s) for s in linspace(0, nk, mchunks+1)]
