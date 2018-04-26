@@ -36,19 +36,17 @@ function analyze_output(input::InputStruct, k::Complex128,
                 x = input.dis.xy[1][1] - input.bnd.∂R[1]
                 phs = exp.(+1im*kₓ*x)
                 P = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
-                ε = input.wgs.ε[input.sct.channels[m].wg]
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
                 x = input.dis.xy[1][end] - input.bnd.∂R[2]
                 phs = exp.(-1im*kₓ*x)
                 P = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
-                ε = input.wgs.ε[input.sct.channels[m].wg]
             end
             φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]
         elseif input.wgs.dir[input.sct.channels[m].wg] in ["y", "Y"]
             error("Haven't written vertical waveguide code yet.")
         end
 
-        cm = phs*sum(conj(φ).*ε.*P)*input.dis.dx[2]
+        cm = phs*sum(conj(φ).*P)*input.dis.dx[2]
     elseif (bc_sig in ["OOOO", "IIII"])
         cm = analyze_into_angular_momentum(input, k, ψ, m, "out")
     end
@@ -77,19 +75,17 @@ function analyze_input(input::InputStruct, k::Complex128,
                 x = input.dis.xy[1][1] - input.bnd.∂R[1]
                 phs = exp.(-1im*kₓ*x)
                 P = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
-                ε = input.wgs.ε[input.sct.channels[m].wg]
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
                 x = input.dis.xy[1][end] - input.bnd.∂R[2]
                 phs = exp.(+1im*kₓ*x)
                 P = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
-                ε = input.wgs.ε[input.sct.channels[m].wg]
             end
             φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]
         elseif input.wgs.dir[input.sct.channels[m].wg] in ["y", "Y"]
             error("Haven't written vertical waveguide code yet.")
         end
 
-        cm = phs*sum(conj(φ).*ε.*P)*input.dis.dx[2]
+        cm = phs*sum(conj(φ).*P)*input.dis.dx[2]
     elseif (bc_sig in ["OOOO", "IIII"])
         cm = analyze_into_angular_momentum(input, k, ψ, m, "in")
     end
