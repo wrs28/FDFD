@@ -83,7 +83,7 @@ function analyze_input(input::InputStruct, K::Union{Complex128,Float64,Int},
                 phs = exp.(+1im*real(kₓ)*x)
                 Φ = real(kₓ)*reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
             end
-            φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]*exp(2L*imag(kₓ))*sqrt(1/real(kₓ))
+            φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]*sqrt(1/real(kₓ))
         elseif input.wgs.dir[input.sct.channels[m].wg] in ["y", "Y"]
             error("Haven't written vertical waveguide code yet.")
         end
