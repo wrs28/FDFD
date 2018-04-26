@@ -1,13 +1,15 @@
+export analyze_input, analyze_output
 """
 s = analyze_output(input, k, ψ, m)
     s is the output coefficient in the mth channel
 
     S is constructed from s for unit input on each channel
 """
-function analyze_output(input::InputStruct, k::Complex128,
+function analyze_output(input::InputStruct, K::Union{Complex128,Float64,Int},
     ψ::Array{Complex{Float64},1}, m::Int)::Complex128
 
     bc_sig = input.bnd.bc_sig
+    k = complex(float(K))
 
     if bc_sig in ["Oddd", "Odnn", "Oddn", "Odnd"]
         x = input.dis.xy[1] - input.bnd.∂R[2]
@@ -59,10 +61,11 @@ cm = analyze_input(input, k, ψ, m)
 
     cm is the input power for a CPA input, that is, one where there is no output
 """
-function analyze_input(input::InputStruct, k::Complex128,
+function analyze_input(input::InputStruct, K::Union{Complex128,Float64,Int},
     ψ::Array{Complex{Float64},1}, m::Int)::Complex128
 
     bc_sig = input.bnd.bc_sig
+    k = complex(float(K))
 
     if bc_sig in ["Oddd", "Odnn", "Oddn", "Odnd"]
         error("Haven't written input analyzer for one-sided input in a waveguide")
