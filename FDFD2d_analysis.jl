@@ -37,18 +37,18 @@ function analyze_output(input::InputStruct, K::Union{Complex128,Float64,Int},
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
                 x = input.dis.xy[1][1] - input.bnd.∂R[1]
                 phs = exp.(+1im*kₓ*x)
-                P = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
+                P = kₓ*reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
                 x = input.dis.xy[1][end] - input.bnd.∂R[2]
                 phs = exp.(-1im*kₓ*x)
-                P = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
+                P = kₓ*reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
             end
-            φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]
+            φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]*exp(2L*imag(kₓ))*sqrt(1/real(kₓ))
         elseif input.wgs.dir[input.sct.channels[m].wg] in ["y", "Y"]
             error("Haven't written vertical waveguide code yet.")
         end
 
-        cm = kₓ*phs*sum(conj(φ).*P)*input.dis.dx[2]
+        cm = phs*sum(conj(φ).*P)*input.dis.dx[2]
     elseif (bc_sig in ["OOOO", "IIII"])
         cm = analyze_into_angular_momentum(input, k, ψ, m, "out")
     end
@@ -77,18 +77,18 @@ function analyze_input(input::InputStruct, K::Union{Complex128,Float64,Int},
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
                 x = input.dis.xy[1][1] - input.bnd.∂R[1]
                 phs = exp.(-1im*kₓ*x)
-                P = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
+                P = kₓ*reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
                 x = input.dis.xy[1][end] - input.bnd.∂R[2]
                 phs = exp.(+1im*kₓ*x)
-                P = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
+                P = kₓ*reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
             end
-            φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]
+            φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]*exp(2L*imag(kₓ))*sqrt(1/real(kₓ))
         elseif input.wgs.dir[input.sct.channels[m].wg] in ["y", "Y"]
             error("Haven't written vertical waveguide code yet.")
         end
 
-        cm = kₓ*phs*sum(conj(φ).*P)*input.dis.dx[2]
+        cm = phs*sum(conj(φ).*P)*input.dis.dx[2]
     elseif (bc_sig in ["OOOO", "IIII"])
         cm = analyze_into_angular_momentum(input, k, ψ, m, "in")
     end
