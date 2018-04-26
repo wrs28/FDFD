@@ -66,13 +66,7 @@ function scattering_l(input::InputStruct, k::Complex128, a::Array{Complex128,1};
 
     k²= k^2
 
-    bc_original = deepcopy(input.bnd.bc)
-    for i in 1:4
-        if input.bnd.bc[i]=="I"
-            input.bnd.bc[i] = "O"
-        end
-    end
-    input.bnd.bc_sig = prod(input.bnd.bc)
+    input, bc_original = set_bc(input, "pole", [0,0])
 
     j, ∇² = synthesize_source(input, k, a)
 
@@ -89,8 +83,7 @@ function scattering_l(input::InputStruct, k::Complex128, a::Array{Complex128,1};
 
     ψ = H\j
 
-    input.bnd.bc = bc_original
-    input.bnd.bc_sig = prod(bc_original)
+    reset_bc!(input, bc_original)
 
     return ψ, H
 end # end of function scattering_l
