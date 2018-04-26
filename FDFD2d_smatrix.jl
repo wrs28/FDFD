@@ -61,10 +61,10 @@ function smatrix_p(input::InputStruct, k::Union{Array{Complex128,1},Array{Float6
     Tuple{SharedArray{Complex128},Channel}
 
     if !isNonLinear
-        S, r = smatrix_lp(input, complex(k); F=F, dispOpt=dispOpt,
+        S, r = smatrix_lp(input, complex(float(k)); F=F, dispOpt=dispOpt,
                         fileName=fileName, num_blocks=num_blocks)
     else
-        S, r = smatrix_nlp(input, complex(k); N=N, N_type=N_type,
+        S, r = smatrix_nlp(input, complex(float(k)); N=N, N_type=N_type,
                         isNonLinear=isNonLinear, F=F, dispOpt=dispOpt,
                         ψ_init=ψ_init, fileName=fileName, num_blocks=num_blocks)
     end
