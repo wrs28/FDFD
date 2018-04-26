@@ -35,12 +35,12 @@ function analyze_output(input::InputStruct, K::Union{Complex128,Float64,Int},
         if (input.wgs.dir[input.sct.channels[m].wg] in ["x", "X"])
             kₓ, φy = wg_transverse_y(input, k, m)
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
-                P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
-                P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[2,:]
+                P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[2,:]
+                P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[3,:]
                 dPdx = -(P2-P1)/input.dis.dx[1]
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
-                P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end-1,:]
-                P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
+                P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end-2,:]
+                P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end-1,:]
                 dPdx = (P2-P1)/input.dis.dx[1]
             end
             φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]*sqrt(1/real(kₓ))
@@ -75,12 +75,12 @@ function analyze_input(input::InputStruct, K::Union{Complex128,Float64,Int},
         if (input.wgs.dir[input.sct.channels[m].wg] in ["x", "X"])
             kₓ, φy = wg_transverse_y(input, k, m)
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
-                P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
-                P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[2,:]
+                P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[2,:]
+                P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[3,:]
                 dPdx = (P2-P1)/input.dis.dx[1]
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
-                P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end-1,:]
-                P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
+                P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end-2,:]
+                P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end-1,:]
                 dPdx = -(P2-P1)/input.dis.dx[1]
             end
             φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]*sqrt(1/real(kₓ))
