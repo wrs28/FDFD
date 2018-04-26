@@ -38,7 +38,6 @@ function analyze_output(input::InputStruct, K::Union{Complex128,Float64,Int},
                 P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
                 P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[2,:]
                 dPdx = -(P2-P1)/input.dis.dx[1]
-                P = (P1+P2)/2
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
                 P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end-1,:]
                 P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
@@ -49,7 +48,7 @@ function analyze_output(input::InputStruct, K::Union{Complex128,Float64,Int},
             error("Haven't written vertical waveguide code yet.")
         end
 
-        cm = sum(imag(conj(φ).*P))*input.dis.dx[2]
+        cm = sum(imag(conj(φ).*dPdx))*input.dis.dx[2]
     elseif (bc_sig in ["OOOO", "IIII"])
         cm = analyze_into_angular_momentum(input, k, ψ, m, "out")
     end
@@ -79,19 +78,17 @@ function analyze_input(input::InputStruct, K::Union{Complex128,Float64,Int},
                 P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
                 P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[2,:]
                 dPdx = (P2-P1)/input.dis.dx[1]
-                P = (P1+P2)/2
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
                 P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end-1,:]
                 P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
                 dPdx = -(P2-P1)/input.dis.dx[1]
-                P = (P1+P2)/2
             end
             φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]*sqrt(1/real(kₓ))
         elseif input.wgs.dir[input.sct.channels[m].wg] in ["y", "Y"]
             error("Haven't written vertical waveguide code yet.")
         end
 
-        cm = sum(imag(conj(φ).*P))*input.dis.dx[2]
+        cm = sum(imag(conj(φ).*dPdx))*input.dis.dx[2]
     elseif (bc_sig in ["OOOO", "IIII"])
         cm = analyze_into_angular_momentum(input, k, ψ, m, "in")
     end

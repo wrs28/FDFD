@@ -45,7 +45,7 @@ function incident_mode(input::InputStruct, k::Complex128, m::Int)::
             φ₊ = sqrt(1/real(kₓ))*exp.(+1im*kₓ*x).*φy
             φ₋ = φ₊.*(input.sct.∂S[2] .≤ input.dis.XY_PML[1][:] .< input.bnd.∂R[2])
         elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
-            x = (input.dis.XY_PML[1] - input.bnd.∂R[2])[:]
+            x = (input.dis.XY_PML[1] - input.bnd.∂R[1])[:]
             φ₊ = sqrt(1/real(kₓ))*exp.(-1im*kₓ*x).*φy
             φ₋ = φ₊.*(input.sct.∂S[1] .≥ input.dis.XY_PML[1][:] .> input.bnd.∂R[1])
         end
