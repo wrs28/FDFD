@@ -43,6 +43,7 @@ function analyze_output(input::InputStruct, K::Union{Complex128,Float64,Int},
                 phs = exp.(-1im*kₓ*x)
                 P = kₓ*reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
             end
+            L = input.bnd.ℓ[1]
             φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]*exp(2L*imag(kₓ))*sqrt(1/real(kₓ))
         elseif input.wgs.dir[input.sct.channels[m].wg] in ["y", "Y"]
             error("Haven't written vertical waveguide code yet.")
@@ -83,6 +84,7 @@ function analyze_input(input::InputStruct, K::Union{Complex128,Float64,Int},
                 phs = exp.(+1im*kₓ*x)
                 P = kₓ*reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
             end
+            L = input.bnd.ℓ[1]
             φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]*exp(2L*imag(kₓ))*sqrt(1/real(kₓ))
         elseif input.wgs.dir[input.sct.channels[m].wg] in ["y", "Y"]
             error("Haven't written vertical waveguide code yet.")
