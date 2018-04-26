@@ -88,7 +88,7 @@ function analyze_input(input::InputStruct, K::Union{Complex128,Float64,Int},
             error("Haven't written vertical waveguide code yet.")
         end
 
-        cm = phs*sum(conj(φ).*P)*input.dis.dx[2]
+        cm = phs*sum(conj(φ).*Φ)*input.dis.dx[2]
     elseif (bc_sig in ["OOOO", "IIII"])
         cm = analyze_into_angular_momentum(input, k, ψ, m, "in")
     end
