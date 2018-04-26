@@ -34,6 +34,7 @@ function analyze_output(input::InputStruct, K::Union{Complex128,Float64,Int},
     elseif (bc_sig in ["OOOO", "IIII"]) && (!isempty(input.wgs.dir))
         if (input.wgs.dir[input.sct.channels[m].wg] in ["x", "X"])
             kₓ, φy = wg_transverse_y(input, k, m)
+            φy, φy2 = incident_mode(input, k, m)
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
                 P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[2,:]
                 P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[3,:]
@@ -74,6 +75,7 @@ function analyze_input(input::InputStruct, K::Union{Complex128,Float64,Int},
     elseif (bc_sig in ["OOOO", "IIII"]) && (!isempty(input.wgs.dir))
         if (input.wgs.dir[input.sct.channels[m].wg] in ["x", "X"])
             kₓ, φy = wg_transverse_y(input, k, m)
+            φy, φy2 = incident_mode(input, k, m)
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
                 P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[2,:]
                 P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[3,:]
