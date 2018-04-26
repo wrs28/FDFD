@@ -388,6 +388,20 @@ function set_bc(input::InputStruct, k_type::String, direction::Array{Int,1})::
 
     return input, bc_original
 end
+function set_bc(input::InputStruct)::Tuple{InputStruct, Array{String, 1}}
+
+    bc_original = input.bnd.bc
+
+    for i in 1:4
+        if input.bnd.bc[i] == "I"
+            input.bnd.bc[i] = "O"
+        end
+    end
+
+    input.bnd.bc_sig = prod(input.bnd.bc)
+
+    return input, bc_original
+end
 
 function reset_bc!(input::InputStruct,bc_original::Array{String,1})::InputStruct
 

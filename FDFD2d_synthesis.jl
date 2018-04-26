@@ -76,7 +76,7 @@ kᵤ, φᵤ = wg_transverse_y(input, k, m)
 function wg_transverse_y(input::InputStruct, k::Complex128, m::Int)::
     Tuple{Complex128, Array{Complex128,1}}
 
-    input, bc_original = set_bc(input, k, [0,0])
+    input, bc_original = set_bc(input)
 
     n = input.sct.channels[m].wg
     q = input.sct.channels[m].tqn
