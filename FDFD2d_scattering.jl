@@ -24,6 +24,8 @@ function scattering(input::InputStruct, K::Union{Complex128,Float64,Int},
     k = complex.(float.(K))
     a = complex.(float.(A))
 
+    bc_original = set_bc!(input)
+
     if !isNonLinear
         ψ, H = scattering_l(input, k, a; H=H, F=F)
     elseif isNonLinear
@@ -41,6 +43,8 @@ function scattering(input::InputStruct, K::Union{Complex128,Float64,Int},
             close(fid)
         end
     end
+
+    reset_bc!(input, bc_original)
 
     if truncate
         return ψ[input.dis.xy_inds], H
@@ -66,7 +70,7 @@ function scattering_l(input::InputStruct, k::Complex128, a::Array{Complex128,1};
 
     k²= k^2
 
-    input, bc_original = set_bc(input, "pole", [0,0])
+    bc_original = set_bc!(input)
 
     j, ∇² = synthesize_source(input, k, a)
 
@@ -106,6 +110,8 @@ j, ∇² = synthesize_source(input, k, a)
 function synthesize_source(input::InputStruct, k::Complex128, a::Array{Complex128,1})::
     Tuple{Array{Complex128,1},SparseMatrixCSC{Complex128,Int64}}
 
+    bc_original = set_bc!(input)
+
     N = prod(input.dis.N_PML)
     φ₊ = zeros(Complex128,N)
     φ₋ = zeros(Complex128,N)
@@ -126,6 +132,8 @@ function synthesize_source(input::InputStruct, k::Complex128, a::Array{Complex12
     ɛk² = sparse(1:N, 1:N, input.sct.ɛ₀_PML[:]*k², N, N, +)
 
     j = (∇²+ɛk²)*(M₊.*φ₊ + M₋.*φ₋)
+
+    reset_bc!(input, bc_original)
 
     return j, ∇²
 end # end of function synthesize_source

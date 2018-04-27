@@ -13,6 +13,8 @@ incident_mode(input, k, m)
 function incident_mode(input::InputStruct, k::Complex128, m::Int)::
     Tuple{Array{Complex128,1},Array{Complex128,1}}
 
+    bc_original = set_bc!(input)
+
     φ₊ = zeros(Complex128, prod(input.dis.N_PML))
     φ₋ = zeros(Complex128, prod(input.dis.N_PML))
 
@@ -60,6 +62,8 @@ function incident_mode(input::InputStruct, k::Complex128, m::Int)::
         φ₋[M₋ .& .!M₊] = exp.(1im*q*θ[M₋ .& .!M₊]).*hankelh1.(q,k*r[M₋ .& .!M₊])/2
     end
 
+    reset_bc!(input,bc_original)
+
     return φ₊, φ₋
 end # end of function incident_mode
 
@@ -75,7 +79,7 @@ kᵤ, φᵤ = wg_transverse_y(input, k, m)
 function wg_transverse_y(input::InputStruct, k::Complex128, m::Int)::
     Tuple{Complex128, Array{Complex128,1}}
 
-    input, bc_original = set_bc(input)
+    bc_original = set_bc!(input)
 
     n = input.sct.channels[m].wg
     q = input.sct.channels[m].tqn

@@ -350,8 +350,8 @@ function rad(a::Float64, b::Float64, θ::Float64)::Float64
     return b./sqrt.(sin(θ).^2+(b/a)^2.*cos(θ).^2)
 end
 
-function set_bc(input::InputStruct, k_type::String, direction::Array{Int,1})::
-    Tuple{InputStruct, Array{String, 1}}
+
+function set_bc!(input::InputStruct, k_type::String, direction::Array{Int,1})::Array{String, 1}
 
     bc_original = input.bnd.bc
 
@@ -386,9 +386,9 @@ function set_bc(input::InputStruct, k_type::String, direction::Array{Int,1})::
 
     input.bnd.bc_sig = prod(input.bnd.bc)
 
-    return input, bc_original
+    return bc_original
 end
-function set_bc(input::InputStruct)::Tuple{InputStruct, Array{String, 1}}
+function set_bc!(input::InputStruct)::Tuple{InputStruct, Array{String, 1}}
 
     bc_original = input.bnd.bc
 
@@ -400,7 +400,7 @@ function set_bc(input::InputStruct)::Tuple{InputStruct, Array{String, 1}}
 
     input.bnd.bc_sig = prod(input.bnd.bc)
 
-    return input, bc_original
+    return bc_original
 end
 
 function reset_bc!(input::InputStruct,bc_original::Array{String,1})::InputStruct
