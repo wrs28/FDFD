@@ -49,7 +49,7 @@ function eig_cf(input::InputStruct, k::Union{Complex128,Float64,Int}, k_type::St
     truncate::Bool=false, direction::Array{Int,1}=[1,0])::
     Tuple{Array{Complex128,1},Array{Complex128,2}}
 
-    input, bc_original = set_bc(input, k_type, direction)
+    bc_original = set_bc!(input, k_type, direction)
 
     η, u = eig_cf(input1, k; ncf=ncf, F=F, η_init=η_init, u_init=u_init,
                     truncate=truncate)
@@ -77,7 +77,7 @@ function eig_k(input::InputStruct, k::Union{Complex128,Float64,Int}, k_type::Str
     ψ_init::Array{Complex128,1}=Complex128[], direction::Array{Int,1}=[1,0])::
     Tuple{Array{Complex128,1},Array{Complex128,2}}
 
-    input, bc_original = set_bc(input,k_type, direction)
+    bc_original = set_bc!(input,k_type, direction)
 
     k, ψ = eig_k(input, k; isLinear=isLinear, nk=nk, F=F, truncate=truncate, ψ_init=ψ_init)
 
@@ -228,10 +228,12 @@ function eig_knl(input::InputStruct, k_init::Union{Complex128,Float64,Int}, k_ty
     tol::Float64=.5, max_count::Int=15, max_iter::Int=50, direction::Array{Int,1}=[1,0])::
     Tuple{Array{Complex128,1},Array{Complex128,2},Array{Complex128,1},Bool}
 
-    input1 = set_bc(input,k_type)
+    bc_original = set_bc!(input,k_type,direction)
 
     k, ψ, η, conv = eigKNL(input1, k_init; F=F, dispOpt=dispOpt, η_init=η_init,
         u_init=u_init, k_avoid=k_avoid, tol=tol, max_count=max_count, max_iter=max_iter)
+
+    reset_bc!(input,bc_original)
 end # end of function eig_knl, nonlinear cf rootfinder with modified boundaries
 
 
@@ -330,9 +332,11 @@ function eig_knl(input::InputStruct, kc::Union{Complex128,Float64,Int}, Radii::T
     nk::Int=3, Nq::Int=100, F::Array{Float64,1}=[1.], R_min::Float64=.01,
     rank_tol::Float64=1e-8)::Array{Complex{Float64},1}
 
-    input1 = set_bc(input,k_type)
+    bc_original = set_bc!(input,k_type,direction)
 
     k = eig_knl(input, kc, Radii; nk=nk, Nq=Nq, F=F, R_min=R_min, rank_tol=rank_tol)
+
+    reset_bc!(input,bc_original)
 end # end of function eig_knl, contour integral with modified boundaries
 
 ################################################################################
