@@ -36,20 +36,20 @@ function analyze_output(input::InputStruct, K::Union{Complex128,Float64,Int},
             kₓ, φy = wg_transverse_y(input, k, m)
             φy, φy2 = incident_mode(input, k, m)
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
-                P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[2,:]
-                P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[3,:]
-                dPdx = -(P2-P1)/input.dis.dx[1]
+                x = input.dis.xy[1][1]
+                phs = exp(+1im*kₓ*x)
+                P = real(kₓ)*reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
-                P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end-2,:]
-                P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end-1,:]
-                dPdx = (P2-P1)/input.dis.dx[1]
+                x = input.dis.xy[1][end]
+                phs = exp(-1im*kₓ*x)
+                P = real(kₓ)*reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
             end
-            φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]*sqrt(1/real(kₓ))
+            φ = phs*reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]*sqrt(1/real(kₓ))
         elseif input.wgs.dir[input.sct.channels[m].wg] in ["y", "Y"]
             error("Haven't written vertical waveguide code yet.")
         end
 
-        cm = sum(imag(conj(φ).*dPdx))*input.dis.dx[2]
+        cm = sum(conj(φ).*P)*input.dis.dx[2]
     elseif (bc_sig in ["OOOO", "IIII"])
         cm = analyze_into_angular_momentum(input, k, ψ, m, "out")
     end
@@ -77,20 +77,20 @@ function analyze_input(input::InputStruct, K::Union{Complex128,Float64,Int},
             kₓ, φy = wg_transverse_y(input, k, m)
             φy, φy2 = incident_mode(input, k, m)
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
-                P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[2,:]
-                P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[3,:]
-                dPdx = (P2-P1)/input.dis.dx[1]
+                x = input.dis.xy[1][1]
+                phs = exp(-1im*kₓ*x)
+                P = real(kₓ)*reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[1,:]
             elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
-                P1 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end-2,:]
-                P2 = reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end-1,:]
-                dPdx = -(P2-P1)/input.dis.dx[1]
+                x = input.dis.xy[1][end]
+                phs = exp(+1im*kₓ*x)
+                P = real(kₓ)*reshape(ψ[input.dis.xy_inds],input.dis.N[1],:)[end,:]
             end
             φ = reshape(φy[input.dis.xy_inds],input.dis.N[1],:)[1,:]*sqrt(1/real(kₓ))
         elseif input.wgs.dir[input.sct.channels[m].wg] in ["y", "Y"]
             error("Haven't written vertical waveguide code yet.")
         end
 
-        cm = sum(imag(conj(φ).*dPdx))*input.dis.dx[2]
+        cm = sum(conj(φ).*P)*input.dis.dx[2]
     elseif (bc_sig in ["OOOO", "IIII"])
         cm = analyze_into_angular_momentum(input, k, ψ, m, "in")
     end
