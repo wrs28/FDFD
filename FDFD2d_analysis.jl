@@ -34,7 +34,6 @@ function analyze_output(input::InputStruct, K::Union{Complex128,Float64,Int},
     elseif (bc_sig in ["OOOO", "IIII"]) && (!isempty(input.wgs.dir))
         if (input.wgs.dir[input.sct.channels[m].wg] in ["x", "X"])
             kₓ, φy = wg_transverse_y(input, k, m)
-            φy, φy2 = incident_mode(input, k, m)
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
                 x = input.dis.xy[1][1]
                 phs = exp(+1im*kₓ*x)
@@ -75,7 +74,6 @@ function analyze_input(input::InputStruct, K::Union{Complex128,Float64,Int},
     elseif (bc_sig in ["OOOO", "IIII"]) && (!isempty(input.wgs.dir))
         if (input.wgs.dir[input.sct.channels[m].wg] in ["x", "X"])
             kₓ, φy = wg_transverse_y(input, k, m)
-            φy, φy2 = incident_mode(input, k, m)
             if input.sct.channels[m].side in ["l", "L", "left", "Left"]
                 x = input.dis.xy[1][1]
                 phs = exp(-1im*kₓ*x)
