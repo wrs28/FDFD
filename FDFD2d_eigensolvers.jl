@@ -392,7 +392,7 @@ function set_bc!(input::InputStruct, k_type::String, direction::Array{Int,1})::A
 
     return bc_original
 end
-function set_bc!(input::InputStruct)::Tuple{InputStruct, Array{String, 1}}
+function set_bc!(input::InputStruct)::Array{String, 1}
 
     bc_original = input.bnd.bc
 
