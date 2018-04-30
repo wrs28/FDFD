@@ -52,8 +52,8 @@ function incident_mode(input::InputStruct, k::Complex128, m::Int)::
             φ₋ = φ₊.*(input.sct.∂S[1] .≥ input.dis.XY_PML[1][:] .> input.bnd.∂R[1])
         end
     elseif (bc_sig in ["OOOO", "IIII"])
-        x = input.dis.xy_PML[1]
-        y = input.dis.xy_PML[2]
+        x = input.dis.XY_PML[1][:]
+        y = input.dis.XY_PML[2][:]
         r = sqrt.(x.^2 + y.^2)
         θ = atan2.(y,x)
         q = input.sct.channels[m].tqn
