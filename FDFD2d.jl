@@ -2,8 +2,8 @@ module FDFD2d
 
 using Formatting
 using Interpolations
-# using NLsolve
-# using SpecialFunctions
+using Interpolations
+using SpecialFunctions
 
 ################################################################################
 include("FDFD2d_defaults.jl")

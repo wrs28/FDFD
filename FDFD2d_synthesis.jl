@@ -52,11 +52,11 @@ function incident_mode(input::InputStruct, k::Complex128, m::Int)::
             φ₋ = φ₊.*(input.sct.∂S[1] .≥ input.dis.XY_PML[1][:] .> input.bnd.∂R[1])
         end
     elseif (bc_sig in ["OOOO", "IIII"])
-        x = input.x̄_sct[1]
-        y = input.x̄_sct[2]
+        x = input.dis.xy_PML[1]
+        y = input.dis.xy_PML[2]
         r = sqrt.(x.^2 + y.^2)
         θ = atan2.(y,x)
-        q = input.channels[m].tqn
+        q = input.sct.channels[m].tqn
         φ₊ = exp.(1im*q*θ).*besselj.(q,k*r)
         M₊, M₋ = source_mask(input)
         φ₋[M₋ .& .!M₊] = exp.(1im*q*θ[M₋ .& .!M₊]).*hankelh1.(q,k*r[M₋ .& .!M₊])/2

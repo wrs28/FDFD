@@ -3,6 +3,7 @@ module FDFD2d_plus
 using PyPlot
 using Formatting
 using Interpolations
+using SpecialFunctions
 
 include("FDFD2d_defaults.jl")
 include("FDFD2d_structures.jl")
