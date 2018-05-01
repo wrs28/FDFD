@@ -113,8 +113,7 @@ function analyze_into_angular_momentum(input::InputStruct, k::Complex128,
     R = (findmin(abs.(input.bnd.∂R))[1] + findmin(abs.(input.sct.∂S))[1])/2 # FIX THIS
 
     # interpolate wavefunction at r=R, result is P(θ)
-    pr = interpolate(reshape(real(ψ),input.dis.N_PML[1],:), BSpline(Cubic(Line())), OnGrid())
-    pi = interpolate(reshape(imag(ψ),input.dis.N_PML[1],:), BSpline(Cubic(Line())), OnGrid())
+    p = interpolate(reshape(ψ,input.dis.N_PML[1],:), BSpline(Quadratic(Reflect())), OnGrid())
     X = R*cos.(θ[1:end-1])
     Y = R*sin.(θ[1:end-1])
     Ax = (input.dis.N_PML[1]-1)/(input.dis.xy_PML[1][end]-input.dis.xy_PML[1][1])
@@ -123,9 +122,7 @@ function analyze_into_angular_momentum(input::InputStruct, k::Complex128,
     By = (input.dis.N_PML[2]*input.dis.xy_PML[2][1]-input.dis.xy_PML[2][end])/(input.dis.N_PML[2]-1)
     X_int = Ax*(X-Bx)
     Y_int = Ay*(Y-By)
-    Pr = [pr[X_int[ii],Y_int[ii]] for ii in 1:(nθ-1)]
-    Pi = [pi[X_int[ii],Y_int[ii]] for ii in 1:(nθ-1)]
-    P = Pr+1im*Pi
+    P = [p[X_int[ii],Y_int[ii]] for ii in 1:(nθ-1)]
 
     q = input.sct.channels[m].tqn
 
