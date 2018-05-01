@@ -30,3 +30,10 @@ function wg_transverse_y_params(q::Int)::Tuple{Int,Int}
 
     return nev, k_scale
 end # end function wg_transverse_y_params
+
+
+function analyze_into_angular_momentum_defaults()::Int
+
+    nθ = Int(2e3)+1
+
+end

@@ -105,7 +105,7 @@ analyze_into_angular_momentum(input, k, ψ, m, direction)
 function analyze_into_angular_momentum(input::InputStruct, k::Complex128,
     ψ::Array{Complex{Float64},1}, m::Int, direction::String)::Complex128
 
-    nθ = Int(7e3)+1
+    nθ = analyze_into_angular_momentum_defaults()
     θ = linspace(0,2π,nθ)
     dθ = θ[2]-θ[1]
 
