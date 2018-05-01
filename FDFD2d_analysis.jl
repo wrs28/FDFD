@@ -116,8 +116,8 @@ function analyze_into_angular_momentum(input::InputStruct, k::Complex128,
     p = interpolate(reshape(ψ,input.dis.N_PML[1],:), BSpline(Linear()), OnGrid() )
     X = R*cos.(θ[1:end-1])
     Y = R*sin.(θ[1:end-1])
-    X_int = input.dis.N_PML[1]*(X-input.bnd.∂R_PML[1])/(input.bnd.∂R_PML[2]-input.bnd.∂R_PML[1])
-    Y_int = input.dis.N_PML[2]*(Y-input.bnd.∂R_PML[3])/(input.bnd.∂R_PML[4]-input.bnd.∂R_PML[3])
+    X_int = input.dis.N_PML[1]*(X-input.dis.xy_PML[1][1])/(input.dis.xy_PML[1][end]-input.dis.xy_PML[1][1])
+    Y_int = input.dis.N_PML[2]*(Y-input.dis.xy_PML[2][1])/(input.dis.xy_PML[2][end]-input.dis.xy_PML[2][1])
     P = [p[X_int[ii],Y_int[ii]] for ii in 1:(nθ-1)]
 
     q = input.sct.channels[m].tqn
