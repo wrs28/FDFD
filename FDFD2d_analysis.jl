@@ -113,7 +113,7 @@ function analyze_into_angular_momentum(input::InputStruct, k::Complex128,
     R = (findmin(abs.(input.bnd.∂R))[1] + findmin(abs.(input.sct.∂S))[1])/2 # FIX THIS
 
     # interpolate wavefunction at r=R, result is P(θ)
-    p = interpolate(reshape(ψ,input.dis.N_PML[1],:), BSpline(Quadratic(Reflect())), OnCell())
+    p = interpolate(reshape(ψ,input.dis.N_PML[1],:), BSpline(Quadratic(Reflect())), OnGrid())
     X = R*cos.(θ[1:end-1])
     Y = R*sin.(θ[1:end-1])
     Ax = (input.dis.N_PML[1]-1)/(input.dis.xy_PML[1][end]-input.dis.xy_PML[1][1])
