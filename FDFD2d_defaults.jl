@@ -34,6 +34,6 @@ end # end function wg_transverse_y_params
 
 function analyze_into_angular_momentum_defaults()::Int
 
-    nθ = Int(2e3)+1
+    nθ = Int(7e3)+1
 
 end
