@@ -29,7 +29,7 @@ function smatrix(input::InputStruct, k::Union{
     fileName::String = "", N::Int=1, N_type::String="D",
     ψ_init::Array{Complex128,1}=Complex128[])::Array{Complex128}
 
-    K = Array(complex(float(k)))
+    K = Array(complex.(float.(k)))
     S = smatrix(input, K; channels=channels, isNonLinear=isNonLinear, F=F,
             dispOpt=dispOpt, fileName=fileName, N=N, N_type=N_type,
             ψ_init=ψ_init)
@@ -79,7 +79,7 @@ function smatrix_p(input::InputStruct, k::Union{
     ψ_init::Array{Complex128,1}=Complex128[], num_blocks::Int=3)::
     Tuple{SharedArray{Complex128},Channel}
 
-    K = Array(complex(float(k)))
+    K = Array(complex.(float.(k)))
     S, r = smatrix_p(input, K; isNonLinear=isNonLinear, F=F,
         dispOpt=dispOpt, fileName=fileName, N=N, N_type=N_type,
         ψ_init=ψ_init, num_blocks=num_blocks)
