@@ -20,6 +20,22 @@ function smatrix(input::InputStruct, k::Union{Complex128,Float64,Int};
 
     return S
 end
+function smatrix(input::InputStruct, k::Union{
+    StepRangeLen{Complex{Float64},Base.TwicePrecision{Complex{Float64}},Base.TwicePrecision{Float64}},
+    StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}},
+    StepRange{Int64,Int64} };
+    channels::Array{Int,1}=Array(1:length(input.sct.channels)),
+    isNonLinear::Bool=false, F::Array{Float64,1}=[1.], dispOpt::Bool=true,
+    fileName::String = "", N::Int=1, N_type::String="D",
+    ψ_init::Array{Complex128,1}=Complex128[])::Array{Complex128}
+
+    K = Array(complex(float(k)))
+    S = smatrix(input, K; channels=channels, isNonLinear=isNonLinear, F=F,
+            dispOpt=dispOpt, fileName=fileName, N=N, N_type=N_type,
+            ψ_init=ψ_init)
+
+            return S
+end
 function smatrix(input::InputStruct, k::Union{Array{Complex128,1},Array{Float64,1},Array{Int,1}};
     channels::Array{Int,1}=Array(1:length(input.sct.channels)), isNonLinear::Bool=false,
     F::Array{Float64,1}=[1.], dispOpt::Bool=true, fileName::String = "",
@@ -49,8 +65,24 @@ function smatrix_p(input::InputStruct, k::Union{Complex128,Float64,Int};
 
     K = [k]
     S, r = smatrix_p(input, K; isNonLinear=isNonLinear, F=F,
-                dispOpt=dispOpt, fileName=fileName, N=N, N_type=N_type,
-                ψ_init=ψ_init, num_blocks=num_blocks)
+        dispOpt=dispOpt, fileName=fileName, N=N, N_type=N_type,
+        ψ_init=ψ_init, num_blocks=num_blocks)
+
+    return S, r
+end
+function smatrix_p(input::InputStruct, k::Union{
+    StepRangeLen{Complex{Float64},Base.TwicePrecision{Complex{Float64}},Base.TwicePrecision{Float64}},
+    StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}},
+    StepRange{Int64,Int64} };
+    isNonLinear::Bool=false, F::Array{Float64,1}=[1.], dispOpt::Bool=true,
+    fileName::String = "", N::Int=1, N_type::String="D",
+    ψ_init::Array{Complex128,1}=Complex128[], num_blocks::Int=3)::
+    Tuple{SharedArray{Complex128},Channel}
+
+    K = Array(complex(float(k)))
+    S, r = smatrix_p(input, K; isNonLinear=isNonLinear, F=F,
+        dispOpt=dispOpt, fileName=fileName, N=N, N_type=N_type,
+        ψ_init=ψ_init, num_blocks=num_blocks)
 
     return S, r
 end
@@ -105,10 +137,18 @@ function smatrix_l(input::InputStruct, k::Array{Complex128,1};
         for m in 1:nc
             a = 0*a
             a[channels[m]] = 1.
-            ψ, ζ = scattering_l(input, k[ii], a; H=ζ)
+            ψ, φ, ζ = scattering_l(input, k[ii], a; H=ζ)
             for m′ in 1:M
-                 cm = analyze_output(input, k[ii], ψ, m′)
-                 S[ii,m,m′] = cm
+                if isempty(input.wgs.dir)
+                    cm = analyze_output(input, k[ii], ψ+φ, m′)
+                else
+                    if input.sct.channels[m′].side == input.sct.channels[m].side
+                        cm = analyze_output(input, k[ii], ψ, m′)
+                    else
+                        cm = analyze_output(input, k[ii], ψ + φ, m′)
+                    end
+                end
+                S[ii,m,m′] = cm
             end
         end
 

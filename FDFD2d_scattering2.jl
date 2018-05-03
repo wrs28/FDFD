@@ -19,7 +19,7 @@ function scattering(input::InputStruct, K::Union{Complex128,Float64,Int},
     F::Array{Float64,1}=[1.], truncate::Bool=false,
     H::Base.SparseArrays.UMFPACK.UmfpackLU=lufact(speye(1,1)), fileName::String = "",
     ftol::Float64=2e-8, iter::Int=150)::
-    Tuple{Array{Complex128,1},Array{Complex128,1},Base.SparseArrays.UMFPACK.UmfpackLU}
+    Tuple{Array{Complex128,1},Base.SparseArrays.UMFPACK.UmfpackLU}
 
     k = complex.(float.(K))
     a = complex.(float.(A))
@@ -27,9 +27,9 @@ function scattering(input::InputStruct, K::Union{Complex128,Float64,Int},
     bc_original = set_bc!(input)
 
     if !isNonLinear
-        ψ, φ, H = scattering_l(input, k, a; H=H, F=F)
+        ψ, H = scattering_l(input, k, a; H=H, F=F)
     elseif isNonLinear
-        ψ, φ, H = scattering_nl(input, k, a; H=H, F=F, dispOpt=dispOpt, ψ_init=ψ_init, ftol=ftol, iter=iter)
+        ψ, H = scattering_nl(input, k, a; H=H, F=F, dispOpt=dispOpt, ψ_init=ψ_init, ftol=ftol, iter=iter)
     end
 
     if !isempty(fileName)
@@ -47,9 +47,9 @@ function scattering(input::InputStruct, K::Union{Complex128,Float64,Int},
     reset_bc!(input, bc_original)
 
     if truncate
-        return ψ[input.dis.xy_inds], φ[input.dis.xy_inds], H
+        return ψ[input.dis.xy_inds], H
     else
-        return ψ, φ, H
+        return ψ, H
     end
 end # end of function scattering
 
@@ -66,23 +66,21 @@ end # end of function scattering
 """
 function scattering_l(input::InputStruct, k::Complex128, a::Array{Complex128,1};
     H::Base.SparseArrays.UMFPACK.UmfpackLU=lufact(speye(1,1)), F::Array{Float64,1}=[1.])::
-    Tuple{Array{Complex128,1},Array{Complex128,1},Base.SparseArrays.UMFPACK.UmfpackLU}
+    Tuple{Array{Complex128,1},Base.SparseArrays.UMFPACK.UmfpackLU}
 
     k²= k^2
 
     bc_original = set_bc!(input)
 
-    ∇² = laplacian(input, k)
-
-    j, φ = synthesize_source(input, k, a)
+    j, ∇² = synthesize_source(input, k, a)
 
     if (H.m == H.n == 1)
         N = prod(input.dis.N_PML)
-        εt = input.sys.ε_PML
-        Ft = input.sys.F_PML
+        ε_sct = input.sys.ε_PML
+        F_sct = input.sys.F_PML
 
-        ɛk² = sparse(1:N, 1:N, ɛt[:]*k², N, N, +)
-        χk² = sparse(1:N, 1:N, input.tls.D₀*γ(input,k)*F.*Ft[:]*k², N, N, +)
+        ɛk² = sparse(1:N, 1:N, ɛ_sct[:]*k², N, N, +)
+        χk² = sparse(1:N, 1:N, input.tls.D₀*γ(input,k)*F.*F_sct[:]*k², N, N, +)
 
         H = factorize(∇²+ɛk²+χk²)
     end
@@ -91,7 +89,7 @@ function scattering_l(input::InputStruct, k::Complex128, a::Array{Complex128,1};
 
     reset_bc!(input, bc_original)
 
-    return ψ, φ, H
+    return ψ, H
 end # end of function scattering_l
 
 """
@@ -110,27 +108,63 @@ j, ∇² = synthesize_source(input, k, a)
     ∇² is laplacian, returned because it was computed along the way.
 """
 function synthesize_source(input::InputStruct, k::Complex128, a::Array{Complex128,1})::
-    Tuple{Array{Complex128,1},Array{Complex128,1}}
+    Tuple{Array{Complex128,1},SparseMatrixCSC{Complex128,Int64}}
+
+    bc_original = set_bc!(input)
 
     N = prod(input.dis.N_PML)
-    φ = zeros(Complex128,N)
+    φ₊ = zeros(Complex128,N)
     φ₋ = zeros(Complex128,N)
-    φt = zeros(Complex128,N)
+    φt₊ = zeros(Complex128,N)
     φt₋ = zeros(Complex128,N)
 
+    M₊, M₋ = source_mask(input)
+
     for m in 1:length(input.sct.channels)
-        φt, φt₋ = incident_mode(input, k, m)
-        φ += a[m]*φt
+        φt₊, φt₋ = incident_mode(input, k, m)
+        φ₊ += a[m]*φt₊
         φ₋ += a[m]*φt₋
     end
 
-    k² = k^2
-    k²δ = k²*(input.sys.ε_PML[:]-input.sct.ε₀_PML[:])
-    j = -k²δ.*φ
-    φ = (input.sys.ε_PML[:] .!== input.sct.ε₀_PML[:]).*φ + (input.sys.ε_PML[:] .== input.sct.ε₀_PML[:]).*φ₋
+    ∇² = laplacian(input, k)
 
-    return j, φ
+    k² = k^2
+    ɛk² = sparse(1:N, 1:N, input.sct.ɛ₀_PML[:]*k², N, N, +)
+
+    j = (∇²+ɛk²)*(M₊.*φ₊ + M₋.*φ₋)
+
+    reset_bc!(input, bc_original)
+
+    return j, ∇²
 end # end of function synthesize_source
+
+"""
+M₊, M₋ = source_mask(input)
+
+    M₊ is the mask for the incident field, corresponds to a circle or radius ∂S
+        if length(∂S) = 1, and a rectangle with boundaries at the elements of ∂S
+        otherwise
+    M₋ is the mask for the outgoing field, corresponds to a rectangle at PML
+        boundary
+"""
+function source_mask(input::InputStruct)::Tuple{Array{Bool,1},Array{Bool,1}}
+
+    ∂S = input.sct.∂S
+    ∂R = input.bnd.∂R
+    x = input.dis.XY_PML[1][:]
+    y = input.dis.XY_PML[2][:]
+
+    if length(∂S)>1
+        M₊ = (∂S[1] .≤ x .≤ ∂S[2]) .& (∂S[3] .≤ y .≤ ∂S[4])
+    elseif length(∂S)==1
+        r = sqrt.(x.^2 + y.^2)
+        M₊ = r .≤ ∂S[1]
+    end
+
+    M₋ = (∂R[1] .≤ x .≤ ∂R[2]) .& (∂R[3] .≤ y .≤ ∂R[4])
+
+    return M₊, M₋
+end # end of function source_mask
 
 
 ################################################################################

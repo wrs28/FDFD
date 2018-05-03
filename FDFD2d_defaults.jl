@@ -3,9 +3,9 @@ PML_params()
 """
 function PML_params()::Tuple{Float64,Float64,Float64,Float64}
 
-    extinction = 1e3
-    change_per_site = 1/3
-    power_law = 2
+    extinction = 5e2
+    change_per_site = 2/3
+    power_law = 4
     α_imag = -.25
 
     return extinction, change_per_site, power_law, α_imag
@@ -13,7 +13,7 @@ end # end function PML_params
 
 
 function TwoLevelSystemDefaults()::Float64
-    F_min = 1e-15
+    F_min = 1e-16
 end
 
 """
@@ -32,8 +32,8 @@ function wg_transverse_y_params(q::Int)::Tuple{Int,Int}
 end # end function wg_transverse_y_params
 
 
-function analyze_into_angular_momentum_defaults()::Int
+function analysis_quadrature_defaults()::Int
 
-    nθ = Int(7e3)+1
+    nθ = Int(1e3)+1
 
 end

@@ -15,12 +15,8 @@ function incident_mode(input::InputStruct, k::Complex128, m::Int)::
 
     bc_original = set_bc!(input)
 
-    N = prod(input.dis.N_PML)
-    φ = zeros(Complex128, N)
-
-    x = input.dis.XY_PML[1][:]
-    y = input.dis.XY_PML[2][:]
-    M = (input.bnd.∂R[1] .< x .< input.bnd.∂R[2]) .& (input.bnd.∂R[3] .< y .< input.bnd.∂R[4])
+    φ₊ = zeros(Complex128, prod(input.dis.N_PML))
+    φ₋ = zeros(Complex128, prod(input.dis.N_PML))
 
     bc_sig = input.bnd.bc_sig
     if bc_sig in ["Oddd", "Odnn", "Oddn", "Odnd"]
@@ -47,24 +43,28 @@ function incident_mode(input::InputStruct, k::Complex128, m::Int)::
         # dielectric waveguide
         kₓ, φy = wg_transverse_y(input, k, m)
         if input.sct.channels[m].side in ["l", "L", "left", "Left"]
+            x = input.dis.XY_PML[1][:]
             φ₊ = sqrt(1/real(kₓ))*exp.(+1im*kₓ*x).*φy
+            φ₋ = φ₊.*(input.sct.∂S[2] .≤ input.dis.XY_PML[1][:] .< input.bnd.∂R[2])
         elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
+            x = input.dis.XY_PML[1][:]
             φ₊ = sqrt(1/real(kₓ))*exp.(-1im*kₓ*x).*φy
+            φ₋ = φ₊.*(input.sct.∂S[1] .≥ input.dis.XY_PML[1][:] .> input.bnd.∂R[1])
         end
-        φ₋ = copy(φ₊)
     elseif (bc_sig in ["OOOO", "IIII"])
+        x = input.dis.XY_PML[1][:]
+        y = input.dis.XY_PML[2][:]
         r = sqrt.(x.^2 + y.^2)
         θ = atan2.(y,x)
         q = input.sct.channels[m].tqn
         φ₊ = exp.(1im*q*θ).*besselj.(q,k*r)
-        φ₋ = exp.(1im*q*θ).*hankelh1.(q,k*r + k*(r.==0).*eps.(r) )/2
+        M₊, M₋ = source_mask(input)
+        φ₋[M₋ .& .!M₊] = exp.(1im*q*θ[M₋ .& .!M₊]).*hankelh1.(q,k*r[M₋ .& .!M₊])/2
     end
-
-
 
     reset_bc!(input,bc_original)
 
-    return φ₊, φ₋.*M
+    return φ₊, φ₋
 end # end of function incident_mode
 
 """

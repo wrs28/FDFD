@@ -1,10 +1,12 @@
 module FDFD2d_plus
 
-using PyPlot
 using Formatting
 using Interpolations
+using Interpolations
 using SpecialFunctions
+using PyPlot
 
+################################################################################
 include("FDFD2d_defaults.jl")
 include("FDFD2d_structures.jl")
 include("FDFD2d_core_numerics.jl")
