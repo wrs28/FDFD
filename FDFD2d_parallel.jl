@@ -6,10 +6,14 @@ export eig_kl
 function eig_kl(input::InputStruct, k::Union{Complex128,Float64,Int},
     fields::Array{Symbol,1}, field_inds::Array{Int,1}, params::Array{Array{Float64,1},1};
     nk::Int=1, F::Array{Float64,1}=[1.], truncate::Bool=false,
-    ψ_init::Array{Complex128,1}=Complex128[])::Tuple{SharedArray,Channel}
+    ψ_init::Array{Complex128,1}=Complex128[], fileName="")::Tuple{SharedArray,Channel}
 
     dims = tuple(nk, length.(field_vals)...)
-    K = SharedArray{Complex128}(dims)
+    if !isempty(fileName)
+        K = SharedArray{Complex128}(dims)
+    else
+        K = SharedArray{Complex128}(fileName, dims)
+    end
 
     r = Channel(length(procs(K)))
     for p in procs(K)
@@ -22,12 +26,12 @@ end  # end of function eig_kl, parallel computation over parameters
 function eig_kl(input::InputStruct, k::Union{Complex128,Float64,Int}, k_type::String,
     fields::Array{Symbol,1}, field_inds::Array{Int,1}, params::Array{Array{Float64,1},1};
     nk::Int=1, F::Array{Float64,1}=[1.], truncate::Bool=false,
-    ψ_init::Array{Complex128,1}=Complex128[], direction::Array{Int,1}=[1,0])::Tuple{SharedArray,Channel}
+    ψ_init::Array{Complex128,1}=Complex128[], direction::Array{Int,1}=[1,0], fileName="")::Tuple{SharedArray,Channel}
 
     input1 = set_bc(input, k_type, direction)
 
     K,r = eig_kl(input1, k, fields, field_inds, params; nk=nk, F=F,
-                truncate=truncate, ψ_init=ψ_init)
+                truncate=truncate, ψ_init=ψ_init, fileName=fileName)
 end # end of function eig_kl, parallel computation over parameters with modified boundaries
 function eig_klp!(K::SharedArray, input::InputStruct, k::Complex128,
     fields::Array{Symbol,1}, field_inds::Array{Int,1}, field_vals::Array{Array{Float64,1},1},
