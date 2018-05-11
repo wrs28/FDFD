@@ -6,7 +6,7 @@ export eig_kl
 function eig_kl(input::InputStruct, k::Union{Complex128,Float64,Int},
     fields::Array{Symbol,1}, field_inds::Array{Int,1}, params::Array{Array{Float64,1},1};
     nk::Int=1, F::Array{Float64,1}=[1.], truncate::Bool=false,
-    ψ_init::Array{Complex128,1}=Complex128[], fileName="")::Tuple{SharedArray,Channel}
+    ψ_init::Array{Complex128,1}=Complex128[], fileName::String="")::Tuple{SharedArray,Channel}
 
     dims = tuple(nk, length.(field_vals)...)
     if !isempty(fileName)
@@ -26,7 +26,7 @@ end  # end of function eig_kl, parallel computation over parameters
 function eig_kl(input::InputStruct, k::Union{Complex128,Float64,Int}, k_type::String,
     fields::Array{Symbol,1}, field_inds::Array{Int,1}, params::Array{Array{Float64,1},1};
     nk::Int=1, F::Array{Float64,1}=[1.], truncate::Bool=false,
-    ψ_init::Array{Complex128,1}=Complex128[], direction::Array{Int,1}=[1,0], fileName="")::Tuple{SharedArray,Channel}
+    ψ_init::Array{Complex128,1}=Complex128[], direction::Array{Int,1}=[1,0], fileName::String="")::Tuple{SharedArray,Channel}
 
     input1 = set_bc(input, k_type, direction)
 
@@ -81,12 +81,12 @@ end
 function eig_kl(input::InputStruct, k::Array{Complex128,1},
     fields::Array{Symbol,1}, field_inds::Array{Int,1}, field_vals::Array{Array{Float64,1},1};
     F::Array{Float64,1}=[1.], truncate::Bool=true,
-    ψ_init::Array{Complex128,1}=Complex128[], dispOpt::Bool=true)::
+    ψ_init::Array{Complex128,1}=Complex128[], dispOpt::Bool=true, fileName::String="")::
     Tuple{SharedArray,Channel}
 
     nk = length(k)
     dims = tuple(nk, length.(field_vals)...)
-    K = SharedArray{Complex128}(dims)
+    K = SharedArray{Complex128}(fileName,dims)
     ψ = Complex128[]
 
     f = fieldnames(input)
@@ -138,13 +138,13 @@ end # end of function eig_kl, bootstrapped parallel computation over parameters
 function eig_kl(input::InputStruct, k::Array{Complex128,1}, k_type::String,
     fields::Array{Symbol,1}, field_inds::Array{Int,1}, field_vals::Array{Array{Float64,1},1};
     F::Array{Float64,1}=[1.], truncate::Bool=true,
-    ψ_init::Array{Complex128,1}=Complex128[], dispOpt::Bool=true,  direction::Array{Int,1}=[1,0])::
-    Tuple{SharedArray,Channel}
+    ψ_init::Array{Complex128,1}=Complex128[], dispOpt::Bool=true,  direction::Array{Int,1}=[1,0],
+    fileName::String="")::Tuple{SharedArray,Channel}
 
     input, bc_original = set_bc(input,k_type, direction)
 
     K, r = eig_kl(input, k, fields, field_inds, field_vals; F=F,
-        truncate=truncate, ψ_init=ψ_init, dispOpt=dispOpt)
+        truncate=truncate, ψ_init=ψ_init, dispOpt=dispOpt, fileName=fileName)
 
     reset_bc!(input, bc_original)
 
