@@ -17,7 +17,7 @@ function eig_kl(input::InputStruct, k::Union{Complex128,Float64,Int},
 
     r = Channel(length(procs(K)))
     for p in procs(K)
-        @async put!(r, remotecall_fetch(eig_klp!, p, K, input, k, fields, field_inds,
+        @async put!(r, remotecall_fetch(eig_klp!, p, K, input, complex(float(k)), fields, field_inds,
                                 field_vals, nk, F, truncate, ψ_init))
     end
 
