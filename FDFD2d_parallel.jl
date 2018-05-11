@@ -12,7 +12,7 @@ function eig_kl(input::InputStruct, k::Union{Complex128,Float64,Int},
     if !isempty(fileName)
         K = SharedArray{Complex128}(dims)
     else
-        K = SharedArray{Complex128}(fileName, dims)
+        K = SharedArray{Complex128}(abspath(fileName), dims)
     end
 
     r = Channel(length(procs(K)))
@@ -86,7 +86,7 @@ function eig_kl(input::InputStruct, k::Array{Complex128,1},
 
     nk = length(k)
     dims = tuple(nk, length.(field_vals)...)
-    K = SharedArray{Complex128}(fileName,dims)
+    K = SharedArray{Complex128}(abspath(fileName),dims)
     ψ = Complex128[]
 
     f = fieldnames(input)
