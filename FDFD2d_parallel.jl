@@ -40,10 +40,21 @@ function eig_klp!(K::SharedArray, input::InputStruct, k::Complex128,
     inds = p_range(K)
     subs = ind2sub(size(K)[2:end],inds)
 
+    f = fieldnames(input)
+    top_field = copy(fields)
+    for i in 1:length(f)
+        g = fieldnames(getfield(input,f[i]))
+        for m in 1:length(fields)
+            if fields[m] in g
+                top_field[m] = f[i]
+            end
+        end
+    end
+
     for i in 1:length(inds)
         for f in 1:length(fields)
-            if !isempty(size(getfield(input,fields[f])))
-                vals_temp = getfield(input,fields[f])
+            if !isempty(size( getfield( getfield(input,top_field[f]) , fields[f]) ))
+                vals_temp = getfield( getfield(input, top_field[f]) , fields[f])
                 vals_temp[field_inds[f]] = field_vals[f][subs[f][i]]
                 input = update_input(input,fields[f],vals_temp)
             else
