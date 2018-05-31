@@ -62,7 +62,7 @@ function eig_klp!(K::SharedArray, input::InputStruct, k::Complex128,
             end
         end
 
-        K[:,[subs[j][i] for j in 1:length(subs)]...], ψ = eigKL(input, k; nk=nk, F=F, truncate=truncate, ψ_init=ψ_init)
+        K[:,[subs[j][i] for j in 1:length(subs)]...], ψ = eig_kl(input, k; nk=nk, F=F, truncate=truncate, ψ_init=ψ_init)
     end
 
     return
