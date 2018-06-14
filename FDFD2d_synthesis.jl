@@ -20,7 +20,7 @@ function incident_mode(input::InputStruct, k::Complex128, m::Int)::
 
     x = input.dis.XY_PML[1][:]
     y = input.dis.XY_PML[2][:]
-    M = (input.bnd.∂R[1] .< x .< input.bnd.∂R[2]) .& (input.bnd.∂R[3] .< y .< input.bnd.∂R[4])
+    M = (input.bnd.∂R[1] .≤ x .≤ input.bnd.∂R[2]) .& (input.bnd.∂R[3] .≤ y .≤ input.bnd.∂R[4])
 
     bc_sig = input.bnd.bc_sig
     if bc_sig in ["Oddd", "Odnn", "Oddn", "Odnd"]

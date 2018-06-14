@@ -2,7 +2,6 @@ module FDFD2d
 
 using Formatting
 using Interpolations
-using Interpolations
 using SpecialFunctions
 
 ################################################################################

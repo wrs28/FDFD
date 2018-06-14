@@ -231,11 +231,16 @@ function σ(input::InputStruct)::Tuple{Array{Complex128,1},Array{Complex128,1}}
 
     α = zeros(Complex128,4)
     for i in 1:4
+        if i in 1:2
+            dx = dx₁
+        else
+            dx = dx₂
+        end
         if input.bnd.bc[i] == "O"
-            ( α[i] = +(1+α_imag*1im)*( (change_per_site/dx₁)^(power_law+1) )/
+            ( α[i] = +(1+α_imag*1im)*( (change_per_site/dx)^(power_law+1) )/
                 ( (power_law+1)*log(extinction) )^power_law )
         elseif input.bnd.bc[i] == "I"
-            ( α[i] = -(1+α_imag*1im)*( (change_per_site/dx₂)^(power_law+1) )/
+            ( α[i] = -(1+α_imag*1im)*( (change_per_site/dx)^(power_law+1) )/
                 ( (power_law+1)*log(extinction) )^power_law )
         else
             α[i] = 0
