@@ -63,8 +63,8 @@ function wave_plot(input::InputStruct, ψ::Union{Array{Complex{Float64},1}, Arra
         ylim( [ ∂R[3],∂R[4] ] )
         axis("tight")
         xlabel("Real")
-        setp(axt[:xaxis][:tick_top]())
-        setp(axt[:xaxis][:set_label_position]("top"))
+        axt[:xaxis][:tick_top]()
+        axt[:xaxis][:set_label_position]("top")
 
         subplot(N+1,3,2); axt = gca()
         pcolormesh(x₁, x₂, transpose(imag(sqrt.(ɛ_sm-1im*input.tls.D₀*F_sm))), cmap="bwr")
@@ -75,8 +75,8 @@ function wave_plot(input::InputStruct, ψ::Union{Array{Complex{Float64},1}, Arra
         xlabel("Imag")
         setp(axt[:get_xticklabels](),visible=false)
         setp(axt[:get_yticklabels](),visible=false)
-        setp(axt[:xaxis][:tick_top]())
-        setp(axt[:xaxis][:set_label_position]("top"))
+        axt[:xaxis][:tick_top]()
+        axt[:xaxis][:set_label_position]("top")
 
         subplot(N+1,3,3); axt = gca()
         pcolormesh(x₁, x₂, transpose(F_sm))
@@ -86,8 +86,8 @@ function wave_plot(input::InputStruct, ψ::Union{Array{Complex{Float64},1}, Arra
         xlabel("F/abs2")
         setp(axt[:get_xticklabels](),visible=false)
         setp(axt[:get_yticklabels](),visible=false)
-        setp(axt[:xaxis][:tick_top]())
-        setp(axt[:xaxis][:set_label_position]("top"))
+        axt[:xaxis][:tick_top]()
+        axt[:xaxis][:set_label_position]("top")
 
         for i in 1:N
 
