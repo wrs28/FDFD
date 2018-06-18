@@ -28,10 +28,13 @@ function eig_kl(input::InputStruct, k::Union{Complex128,Float64,Int}, k_type::St
     nk::Int=1, F::Array{Float64,1}=[1.], truncate::Bool=false,
     ψ_init::Array{Complex128,1}=Complex128[], direction::Array{Int,1}=[1,0], fileName::String="")::Tuple{SharedArray,Channel}
 
-    input1 = set_bc(input, k_type, direction)
+    bc_original = set_bc!(input,k_type, direction)
 
-    K,r = eig_kl(input1, k, fields, field_inds, field_vals; nk=nk, F=F,
+    K,r = eig_kl(input, k, fields, field_inds, field_vals; nk=nk, F=F,
                 truncate=truncate, ψ_init=ψ_init, fileName=fileName)
+
+    reset_bc!(input, bc_original)
+
 end # end of function eig_kl, parallel computation over parameters with modified boundaries
 function eig_klp!(K::SharedArray, input::InputStruct, k::Complex128,
     fields::Array{Symbol,1}, field_inds::Array{Int,1}, field_vals::Array{Array{Float64,1},1},
@@ -156,7 +159,7 @@ function eig_kl(input::InputStruct, k::Array{Complex128,1}, k_type::String,
     ψ_init::Array{Complex128,1}=Complex128[], dispOpt::Bool=true,  direction::Array{Int,1}=[1,0],
     fileName::String="")::Tuple{SharedArray,Channel}
 
-    input, bc_original = set_bc(input,k_type, direction)
+    bc_original = set_bc!(input,k_type, direction)
 
     K, r = eig_kl(input, k, fields, field_inds, field_vals; F=F,
         truncate=truncate, ψ_init=ψ_init, dispOpt=dispOpt, fileName=fileName)
@@ -336,7 +339,9 @@ function eig_knlp(input::InputStruct, kc::Union{Complex128,Float64,Int},
     nk::Int=3, Nq::Int=100, F::Array{Float64,1}=[1.],
     R_min::Float64=.01, rank_tol::Float64=1e-8, direction::Array{Int,1}=[1,0])::Array{Complex128,1}
 
-    input1 = set_bc(input,k_type, direction)
+    bc_original = set_bc!(input,k_type, direction)
 
-    k = eig_knlp(input1, kc, Radii; nk=nk, Nq=Nq, F=F, R_min=R_min, rank_tol=rank_tol)
+    k = eig_knlp(input, kc, Radii; nk=nk, Nq=Nq, F=F, R_min=R_min, rank_tol=rank_tol)
+
+    reset_bc!(input, bc_original)
 end # end of eig_knlp, contour integral parallel with modified boundary
