@@ -1,4 +1,4 @@
-export analyze_input, analyze_output
+export analyze_input, analyze_output, surface_flux, compute_loss
 """
 s = analyze_output(input, k, ψ, m)
     s is the output coefficient in the mth channel
@@ -158,90 +158,56 @@ function analysis_interpolate(input::InputStruct, X::Array{Float64,1}, Y::Array{
 end
 
 """
-surface_K(ψ, pos, coord, inputs)
+surface_flux(input,ψ)
 """
-function surface_K(ψ::Array{Complex128,Int}, pos::Float64, coord::String, inputs::InputStruct)::Array{Float64,Int}
+function surface_flux(input::InputStruct,ψ::Array{Complex128,Int})::
+    Tuple{Array{Float64,1},Tuple{Array{Float64,1},Array{Float64,1},Array{Float64,1},Array{Float64,1}}}
 
-    if coord ∈ ["x","X"]
-        x = inputs.x₁
-        N = inputs.N[1]
-        dx = inputs.dx̄[1]
-    elseif coord ∈ ["y","Y"]
-        x = inputs.x₂
-        N = inputs.N[2]
-        dx = inputs.dx̄[2]
-    end
+    nx = 20
+    ny = 20
 
-    ind = findmin(abs.(x-pos))[2]
+    flux = zeros(Complex128,size(ψ,2))
+    top = copy(flux)
+    bottom = copy(flux)
+    left = copy(flux)
+    right = copy(flux)
 
-    if abs(x[ind+1]-pos)>abs(x[ind-1]-pos)
-        ind1 = ind-1
-        ind2 = ind
-    else
-        ind1 = ind
-        ind2 = ind+1
-    end
-
-    w1 = (pos-x[ind1])/(x[ind2]-x[ind1])
-    w = [w1, 1-w1]
-
-    K = zeros(Float64,N,size(ψ,2))
     for i in 1:size(ψ,2)
-        dΨ = zeros(Complex128,N,2)
-        if coord=="x"
-            Ψ = reshape(ψ[inputs.x̄_inds,i],N,:)[min(ind1-1,ind2-1):max(ind1+1,ind2+1),:]
-            dΨ[:,1] = Ψ[3,:]-Ψ[1,:]
-            dΨ[:,2] = Ψ[4,:]-Ψ[2,:]
-            Ψ = transpose(Ψ)
-
-        elseif coord=="y"
-            Ψ = reshape(ψ[inputs.x̄_inds,i],:,N)[:,min(ind1-1,ind2-1):max(ind1+1,ind2+1)]
-            return min(ind1-1,ind2-1):max(ind1+1,ind2+1)
-            dΨ[:,1] = Ψ[:,3]-Ψ[:,1]
-            dΨ[:,2] = Ψ[:,4]-Ψ[:,2]
-        end
-        K[:,i] = imag((conj(Ψ[:,2:3])*w).*(dΨ*w/dx))
+        dψdx = (ψ[[nx+1,end-nx+1],:] - ψ[[nx-1, end-nx-1],:]) /2input.dis.dx[1]
+        dψdy = (ψ[:,[ny+1,end-ny+1]] - ψ[:,[ny-1, end-ny-1]]) /2input.dis.dx[2]
+        ψx = ψ[[nx,end-nx],:]
+        ψy = ψ[:,[ny,end-ny]]
+        kx = -real((conj(ψx).*dψdx - ψx.*conj(dψdx))/2im)
+        ky = -real((conj(ψy).*dψdy - ψy.*conj(dψdy))/2im)
+        top[i]    = (4*sum(ky[1:2:end-1,end])*input.dis.dx[1] + 2*sum(ky[2:2:end,end])*input.dis.dx[1])/3
+        bottom[i] = (4*sum(-ky[1:2:end-1,1 ])*input.dis.dx[1] + 2*sum(-ky[2:2:end,1 ])*input.dis.dx[1])/3
+        right[i]  = (4*sum(kx[end,1:2:end-1])*input.dis.dx[2] + 2*sum(kx[end,2:2:end])*input.dis.dx[2])/3
+        left[i] =   (4*sum(-kx[1 ,1:2:end-1])*input.dis.dx[2] + 2*sum(-kx[1 ,2:2:end])*input.dis.dx[2])/3
+        flux[i] = top[i] + bottom[i] + right[i] + left[i]
     end
 
-    return K
-end # end of surface_K
-
-
-
-"""
-surface_flux(ψ, pos, coord, inputs)
-"""
-function surface_flux(ψ::Array{Complex128,Int}, pos::Float64, coord::String, inputs::InputStruct)::Array{Float64,Int}
-
-    if coord ∈ ["x","X"]
-        dx = inputs.dx̄[1]
-    elseif coord ∈ ["y","Y"]
-        dx = inputs.dx̄[2]
-    end
-
-    return sum(surface_K(ψ, pos::Float64, coord::String, inputs))*dx
-end
-
+    return flux,(left,right,bottom,top)
+end # end of surface_flux
 
 
 """
 compute_loss(ψ,k,inputs)
 """
-function compute_loss(ψ,k,inputs)
+function compute_loss(input::InputStruct,k::Union{Complex128,Float64},ψ::Array{Complex128,1})::Complex128
+    loss = compute_loss(input,[complex(k)],ψ)
+
+    return loss
+end
+function compute_loss(input::InputStruct,k::Array{Complex128,1},ψ::Array{Complex128,Int})::Array{Complex128,1}
 
     loss = zeros(Float64,length(k))
 
     for i in 1:length(k)
-        Ψ = reshape(ψ[inputs.x̄_inds,i],inputs.N[1],:)
-        ε = reshape(inputs.ε_sm[inputs.x̄_inds],inputs.N[1],:)
-        F = reshape(inputs.F_sm[inputs.x̄_inds],inputs.N[1],:)
-        Ψ = (Ψ[1:end-1,:]+Ψ[2:end,:])/2
-        Ψ = (Ψ[:,1:end-1]+Ψ[:,2:end])/2
-        F = (F[1:end-1,:]+F[2:end,:])/2
-        F = (F[:,1:end-1]+F[:,2:end])/2
-        ε = (ε[1:end-1,:]+ε[2:end,:])/2
-        ε = (ε[:,1:end-1]+ε[:,2:end])/2
-        loss[i] = sum(abs2.(Ψ).*imag((ε-1im*inputs.D₀.*F)*k[i]^2))*prod(inputs.dx̄)
+
+        Ψ = reshape(ψ[input.dis.xy_inds,i],input.dis.N[1],:)
+        A1 = imag((input.sys.ε_sm-1im*input.tls.D₀.*input.sys.F_sm)*k[i]^2).*abs2.(Ψ)
+        A1 = sum(4A1[1:2:end-1,:] + 2A1[2:2:end,:],1)/3
+        loss[i] = (sum(4A1[1:2:end-1] + 2A1[2:2:end])/3)[1]*prod(input.dis.dx)
     end
 
     return loss
