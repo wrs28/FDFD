@@ -160,16 +160,15 @@ end
 """
 surface_flux(input,ψ)
 """
-function surface_flux(input::InputStruct,ψ::Array{Complex128,1})::
-    Tuple{Array{Float64,1},Tuple{Array{Float64,1},Array{Float64,1},Array{Float64,1},Array{Float64,1}}}
+function surface_flux(input::InputStruct, ψ::Array{Complex128,1}; nx::Int=20, ny::Int=20)::
+    Tuple{Float64,Tuple{Float64,Float64,Float64,Float64}}
 
-    flux,(left,right,bottom,top) = surface_flux(input,hcat(ψ,))
+    flux, (left, right, bottom, top) = surface_flux(input, hcat(ψ,); nx=nx, ny=ny)
+
+    return flux[1], (left[1],right[1],bottom[1],top[1])
 end
-function surface_flux(input::InputStruct,Ψ::Array{Complex128,2})::
+function surface_flux(input::InputStruct,Ψ::Array{Complex128,2}; nx::Int=20, ny::Int=20)::
     Tuple{Array{Float64,1},Tuple{Array{Float64,1},Array{Float64,1},Array{Float64,1},Array{Float64,1}}}
-
-    nx = 20
-    ny = 20
 
     flux = zeros(Complex128,size(Ψ,2))
     top = copy(flux)
