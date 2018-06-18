@@ -165,7 +165,7 @@ function surface_flux(input::InputStruct,ψ::Array{Complex128,1})::
 
     flux,(left,right,bottom,top) = surface_flux(input,hcat(ψ,))
 end
-function surface_flux(input::InputStruct,ψ::Array{Complex128,2})::
+function surface_flux(input::InputStruct,Ψ::Array{Complex128,2})::
     Tuple{Array{Float64,1},Tuple{Array{Float64,1},Array{Float64,1},Array{Float64,1},Array{Float64,1}}}
 
     nx = 20
@@ -178,6 +178,7 @@ function surface_flux(input::InputStruct,ψ::Array{Complex128,2})::
     right = copy(flux)
 
     for i in 1:size(ψ,2)
+        ψ = reshape(Ψ[input.dis.xy_inds,i],input.dis.N[1],:)
         dψdx = (ψ[[nx+1,end-nx+1],:] - ψ[[nx-1, end-nx-1],:]) /2input.dis.dx[1]
         dψdy = (ψ[:,[ny+1,end-ny+1]] - ψ[:,[ny-1, end-ny-1]]) /2input.dis.dx[2]
         ψx = ψ[[nx,end-nx],:]
@@ -199,9 +200,10 @@ end # end of surface_flux
 compute_loss(ψ,k,inputs)
 """
 function compute_loss(input::InputStruct, k::Union{Complex128,Float64}, ψ::Array{Complex128,1})::Complex128
+
     loss = compute_loss(input,[complex(k)],hcat(ψ,))
 
-    return loss
+    return loss[1]
 end
 function compute_loss(input::InputStruct,k::Array{Complex128,1},ψ::Array{Complex128,2})::Array{Complex128,1}
 
