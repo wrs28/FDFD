@@ -121,6 +121,34 @@ function γ(input::InputStruct, k::Complex128)::Complex128
     return input.tls.γ⟂./(k-input.tls.k₀+1im*input.tls.γ⟂)
 end
 
+
+"""
+δ = dirac_δ(x, x₀)
+
+δ sparse, dirac distribution weighted to be centered at x₀.
+
+"""
+function dirac_δ(x::Array{Float64,1},x₀::Float64)
+
+    ind₁ = findmin(abs2.(x-x₀))[2]
+    ind₂ = ind₁ + (2*mod(findmin([findmin(abs2.(x[ind₁+1]-x₀))[1] findmin(abs2.(x[ind₁-1]-x₀))[1]])[2],2)[1] -1)
+    min_ind = min(ind₁,ind₂)
+    max_ind = max(ind₁,ind₂)
+
+    x₁ = x[min_ind]
+    x₂ = x[max_ind]
+    dx = abs(x₂-x₁)
+    dx² = dx^2
+
+    w₁ = abs(x₂-x₀)./dx²
+    w₂ = abs(x₀-x₁)./dx²
+
+    δ = sparsevec([min_ind,max_ind],[w₁,w₂],length(x),+)
+
+    return δ
+end # end of function dirac_δ
+
+
 """
 ∫z_dx = trapz(z, dx)
 """

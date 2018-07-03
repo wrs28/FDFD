@@ -1,4 +1,4 @@
-export analyze_input, analyze_output, surface_flux, compute_loss
+export analyze_input, analyze_output, surface_flux, bulk_absorption
 """
 s = analyze_output(input, k, ψ, m)
     s is the output coefficient in the mth channel
@@ -198,13 +198,13 @@ end # end of surface_flux
 """
 compute_loss(ψ,k,inputs)
 """
-function compute_loss(input::InputStruct, k::Union{Complex128,Float64}, ψ::Array{Complex128,1})::Float64
+function bulk_absorption(input::InputStruct, k::Union{Complex128,Float64}, ψ::Array{Complex128,1})::Float64
 
-    loss = compute_loss(input,[complex(k)],hcat(ψ,))
+    loss = bulk_absorption(input,[complex(k)],hcat(ψ,))
 
     return loss[1]
 end
-function compute_loss(input::InputStruct,k::Array{Complex128,1},ψ::Array{Complex128,2})::Array{Float64,1}
+function bulk_absorption(input::InputStruct,k::Array{Complex128,1},ψ::Array{Complex128,2})::Array{Float64,1}
 
     loss = zeros(Float64,length(k))
 

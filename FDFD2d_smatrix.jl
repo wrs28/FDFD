@@ -11,14 +11,15 @@ function smatrix(input::InputStruct, k::Union{Complex128,Float64,Int};
     channels::Array{Int,1}=Array(1:length(input.sct.channels)),
     isNonLinear::Bool=false, F::Array{Float64,1}=[1.], dispOpt::Bool=true,
     fileName::String = "", N::Int=1, N_type::String="D",
-    ψ_init::Array{Complex128,1}=Complex128[])::Array{Complex128}
+    ψ_init::Array{Complex128,1}=Complex128[])::
+    Tuple{Array{Complex128}, Array{Complex128}, Array{Complex128}, Array{Complex128}}
 
     K = [k]
-    S = smatrix(input, K; channels=channels, isNonLinear=isNonLinear, F=F,
+    S, flux_sct, flux_tot, absorption = smatrix(input, K; channels=channels, isNonLinear=isNonLinear, F=F,
                 dispOpt=dispOpt, fileName=fileName, N=N, N_type=N_type,
                 ψ_init=ψ_init)
 
-    return S
+    return S, flux_sct, flux_tot, absorption
 end
 function smatrix(input::InputStruct, k::Union{
     StepRangeLen{Complex{Float64},Base.TwicePrecision{Complex{Float64}},Base.TwicePrecision{Float64}},
@@ -27,30 +28,32 @@ function smatrix(input::InputStruct, k::Union{
     channels::Array{Int,1}=Array(1:length(input.sct.channels)),
     isNonLinear::Bool=false, F::Array{Float64,1}=[1.], dispOpt::Bool=true,
     fileName::String = "", N::Int=1, N_type::String="D",
-    ψ_init::Array{Complex128,1}=Complex128[])::Array{Complex128}
+    ψ_init::Array{Complex128,1}=Complex128[])::
+    Tuple{Array{Complex128}, Array{Complex128}, Array{Complex128}, Array{Complex128}}
 
     K = Array(complex.(float.(k)))
-    S = smatrix(input, K; channels=channels, isNonLinear=isNonLinear, F=F,
+    S, flux_sct, flux_tot, absorption = smatrix(input, K; channels=channels, isNonLinear=isNonLinear, F=F,
             dispOpt=dispOpt, fileName=fileName, N=N, N_type=N_type,
             ψ_init=ψ_init)
 
-            return S
+            return S, flux_sct, flux_tot, absorption
 end
 function smatrix(input::InputStruct, k::Union{Array{Complex128,1},Array{Float64,1},Array{Int,1}};
     channels::Array{Int,1}=Array(1:length(input.sct.channels)), isNonLinear::Bool=false,
     F::Array{Float64,1}=[1.], dispOpt::Bool=true, fileName::String = "",
-    N::Int=1, N_type::String="D", ψ_init::Array{Complex128,1}=Complex128[])::Array{Complex128}
+    N::Int=1, N_type::String="D", ψ_init::Array{Complex128,1}=Complex128[])::
+    Tuple{Array{Complex128}, Array{Complex128}, Array{Complex128}, Array{Complex128}}
 
     if !isNonLinear
-        S = smatrix_l(input, complex(k); channels=channels, F=F, dispOpt=dispOpt,
+        S, flux_sct, flux_tot, absorption = smatrix_l(input, complex(k); channels=channels, F=F, dispOpt=dispOpt,
                         fileName=fileName)
     else
-        S = smatrix_nl(input, complex(k); channels=channels, N=N, N_type=N_type,
+        S, flux_sct, flux_tot, absorption = smatrix_nl(input, complex(k); channels=channels, N=N, N_type=N_type,
                         isNonLinear=isNonLinear, F=F, dispOpt=dispOpt,
                         ψ_init=ψ_init, fileName=fileName)
     end
 
-    return S
+    return S, flux_sct, flux_tot, absorption
 end # end of fuction smatrix
 
 """
@@ -61,14 +64,14 @@ function smatrix_p(input::InputStruct, k::Union{Complex128,Float64,Int};
     isNonLinear::Bool=false, F::Array{Float64,1}=[1.], dispOpt::Bool=true,
     fileName::String = "", N::Int=1, N_type::String="D",
     ψ_init::Array{Complex128,1}=Complex128[], num_blocks::Int=3)::
-    Tuple{SharedArray{Complex128},Channel}
+    Tuple{SharedArray{Complex128}, SharedArray{Complex128}, SharedArray{Complex128}, SharedArray{Complex128}, Channel}
 
     K = [k]
-    S, r = smatrix_p(input, K; isNonLinear=isNonLinear, F=F,
+    S, flux_sct, flux_tot, absorption, r = smatrix_p(input, K; isNonLinear=isNonLinear, F=F,
         dispOpt=dispOpt, fileName=fileName, N=N, N_type=N_type,
         ψ_init=ψ_init, num_blocks=num_blocks)
 
-    return S, r
+    return S, flux_sct, flux_tot, absorption, r
 end
 function smatrix_p(input::InputStruct, k::Union{
     StepRangeLen{Complex{Float64},Base.TwicePrecision{Complex{Float64}},Base.TwicePrecision{Float64}},
@@ -77,31 +80,31 @@ function smatrix_p(input::InputStruct, k::Union{
     isNonLinear::Bool=false, F::Array{Float64,1}=[1.], dispOpt::Bool=true,
     fileName::String = "", N::Int=1, N_type::String="D",
     ψ_init::Array{Complex128,1}=Complex128[], num_blocks::Int=3)::
-    Tuple{SharedArray{Complex128},Channel}
+    Tuple{SharedArray{Complex128}, SharedArray{Complex128}, SharedArray{Complex128}, SharedArray{Complex128}, Channel}
 
     K = Array(complex.(float.(k)))
-    S, r = smatrix_p(input, K; isNonLinear=isNonLinear, F=F,
+    S, flux_sct, flux_tot, absorption, r = smatrix_p(input, K; isNonLinear=isNonLinear, F=F,
         dispOpt=dispOpt, fileName=fileName, N=N, N_type=N_type,
         ψ_init=ψ_init, num_blocks=num_blocks)
 
-    return S, r
+    return S, flux_sct, flux_tot, absorption, r
 end
 function smatrix_p(input::InputStruct, k::Union{Array{Complex128,1},Array{Float64,1},Array{Int,1}};
     isNonLinear::Bool=false,
     F::Array{Float64,1}=[1.], dispOpt::Bool=true, fileName::String = "", N::Int=1,
     N_type::String="D", ψ_init::Array{Complex128,1}=Complex128[], num_blocks::Int=3)::
-    Tuple{SharedArray{Complex128},Channel}
+    Tuple{SharedArray{Complex128}, SharedArray{Complex128}, SharedArray{Complex128}, SharedArray{Complex128}, Channel}
 
     if !isNonLinear
-        S, r = smatrix_lp(input, complex.(float.(k)); F=F, dispOpt=dispOpt,
+        S, flux_sct, flux_tot, absorption, r = smatrix_lp(input, complex.(float.(k)); F=F, dispOpt=dispOpt,
                         fileName=fileName, num_blocks=num_blocks)
     else
-        S, r = smatrix_nlp(input, complex.(float.(k)); N=N, N_type=N_type,
+        S, flux_sct, flux_tot, absorption, r = smatrix_nlp(input, complex.(float.(k)); N=N, N_type=N_type,
                         isNonLinear=isNonLinear, F=F, dispOpt=dispOpt,
                         ψ_init=ψ_init, fileName=fileName, num_blocks=num_blocks)
     end
 
-    return S, r
+    return S, flux_sct, flux_tot, absorption, r
 end # end of fuction smatrix_p
 
 ################################################################################
@@ -113,13 +116,17 @@ S =  smatrix_l(input; F=[1.], dispOpt=true, fileName = "")
 """
 function smatrix_l(input::InputStruct, k::Array{Complex128,1};
     channels::Array{Int,1}=Array(1:length(input.sct.channels)), F::Array{Float64,1}=[1.],
-    dispOpt::Bool=true, fileName::String = "")::Array{Complex128,3}
+    dispOpt::Bool=true, fileName::String = "")::
+    Tuple{Array{Complex128,3}, Array{Complex128,3}, Array{Complex128,3}, Array{Complex128,3}}
 
     nc = length(channels)
     nk = length(k)
 
     M = length(input.sct.channels)
     S = NaN*ones(Complex128,nk,length(channels),M)
+    Φ_sct = NaN*ones(Complex128,nk,length(channels),M)
+    Φ_tot = NaN*ones(Complex128,nk,length(channels),M)
+    A = NaN*ones(Complex128,nk,length(channels),M)
     a = zeros(Complex128,M)
     ψ = Array{Complex128}(1)
 
@@ -145,21 +152,24 @@ function smatrix_l(input::InputStruct, k::Array{Complex128,1};
                     if input.sct.channels[m′].side == input.sct.channels[m].side
                         cm = analyze_output(input, k[ii], ψ, m′)
                     else
-                        cm = analyze_output(input, k[ii], ψ + φ, m′)
+                        cm = analyze_output(input, k[ii], ψ+φ, m′)
                     end
                 end
+                Φ_sct[ii,m,m′] = surface_flux(input, ψ)
+                Φ_tot[ii,m,m′] = surface_flux(input, ψ+φ)
+                A[ii,m,m′] = bulk_absorption(input, k[ii]], ψ+φ)
                 S[ii,m,m′] = cm
             end
         end
 
         if !isempty(fileName)
             fid = open(fileName,"w")
-            serialize(fid,(S,input,ii))
+            serialize(fid,(S,Φ_sct, Φ_tot, A, input,ii))
             close(fid)
         end
     end
 
-    return S
+    return S, Φ_sct, Φ_tot, A
 end # end of fuction smatrix_l
 
 """
@@ -174,12 +184,21 @@ function smatrix_lp(input::InputStruct, k::Array{Complex128,1};
 
     if isempty(fileName)
         S = SharedArray{Complex128}((length(k),M,M), pids=workers())
+        Φ_sct = SharedArray{Complex128}((length(k),M,M), pids=workers())
+        Φ_tot = SharedArray{Complex128}((length(k),M,M), pids=workers())
+        A = SharedArray{Complex128}((length(k),M,M), pids=workers())
     else
         S = SharedArray{Complex128}(abspath(fileName),(length(k),M,M), pids=workers(), mode="w+")
+        Φ_sct = SharedArray{Complex128}(abspath(fileName),(length(k),M,M), pids=workers(), mode="w+")
+        Φ_tot = SharedArray{Complex128}(abspath(fileName),(length(k),M,M), pids=workers(), mode="w+")
+        A = SharedArray{Complex128}(abspath(fileName),(length(k),M,M), pids=workers(), mode="w+")
     end
 
     for i in 1:length(S)
         S[i]=1im*NaN
+        Φ_sct[i]=1im*NaN
+        Φ_tot[i]=1im*NaN
+        A[i]=1im*NaN
     end
 
     P = procs(S)
@@ -212,23 +231,25 @@ function smatrix_lp(input::InputStruct, k::Array{Complex128,1};
             k_inds = Array(nksplits[k_idx]+1:nksplits[k_idx+1])
         end
 
-        @async put!(r, remotecall_fetch(smatrix_lp!, p, S, input, k, k_inds, a_inds;
+        @async put!(r, remotecall_fetch(smatrix_lp!, p, S, Φ_sct, Φ_abs, A, input, k, k_inds, a_inds;
                 F=F, dispOpt=dispOpt) )
     end
 
-    return S, r
+    return S, Φ_sct, Φ_tot, A, r
 end # end of function smatrix_lp
 
 """
 smatrix_lp!
 """
-function smatrix_lp!(S::SharedArray{Complex128,3}, input::InputStruct, k::Array{Complex128,1},
-    k_inds::Array{Int,1}, a_inds::Array{Int,1};
-    F::Array{Float64,1}=[1.], dispOpt::Bool=true)::SharedArray{Complex128,3}
+function smatrix_lp!(S::SharedArray{Complex128,3}, Φ_sct::SharedArray{Complex128,3},
+    Φ_tot::SharedArray{Complex128,3}, A::SharedArray{Complex128,3}, input::InputStruct,
+    k::Array{Complex128,1}, k_inds::Array{Int,1}, a_inds::Array{Int,1};
+    F::Array{Float64,1}=[1.], dispOpt::Bool=true)::
+    Tuple{SharedArray{Complex128,3}, SharedArray{Complex128,3}, SharedArray{Complex128,3}, SharedArray{Complex128,3}}
 
-    S[k_inds,a_inds,:] = smatrix_l(input, k[k_inds]; channels=a_inds, F=F, dispOpt=dispOpt)
+    S[k_inds,a_inds,:], Φ_sct[k_inds,a_inds,:], Φ_tot[k_inds,a_inds,:], A[k_inds,a_inds,:] = smatrix_l(input, k[k_inds]; channels=a_inds, F=F, dispOpt=dispOpt)
 
-    return S
+    return S, Φ_sct, Φ_tot, A
 end # end of function smatrix_lp!
 
 
