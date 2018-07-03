@@ -197,9 +197,9 @@ function smatrix_lp(input::InputStruct, k::Array{Complex128,1};
 
     for i in 1:length(S)
         S[i]=1im*NaN
-        Φ_sct[i]=1im*NaN
-        Φ_tot[i]=1im*NaN
-        A[i]=1im*NaN
+        Φ_sct[i]=1.*NaN
+        Φ_tot[i]=1.*NaN
+        A[i]=1.*NaN
     end
 
     P = procs(S)
