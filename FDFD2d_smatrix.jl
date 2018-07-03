@@ -124,9 +124,9 @@ function smatrix_l(input::InputStruct, k::Array{Complex128,1};
 
     M = length(input.sct.channels)
     S = NaN*ones(Complex128,nk,length(channels),M)
-    Φ_sct = NaN*ones(Complex128,nk,length(channels),M)
-    Φ_tot = NaN*ones(Complex128,nk,length(channels),M)
-    A = NaN*ones(Complex128,nk,length(channels),M)
+    Φ_sct = NaN*ones(Float64,nk,length(channels),M)
+    Φ_tot = NaN*ones(Float64,nk,length(channels),M)
+    A = NaN*ones(Float64,nk,length(channels),M)
     a = zeros(Complex128,M)
     ψ = Array{Complex128}(1)
 
@@ -185,14 +185,14 @@ function smatrix_lp(input::InputStruct, k::Array{Complex128,1};
 
     if isempty(fileName)
         S = SharedArray{Complex128}((length(k),M,M), pids=workers())
-        Φ_sct = SharedArray{Complex128}((length(k),M,M), pids=workers())
-        Φ_tot = SharedArray{Complex128}((length(k),M,M), pids=workers())
-        A = SharedArray{Complex128}((length(k),M,M), pids=workers())
+        Φ_sct = SharedArray{Float64}((length(k),M,M), pids=workers())
+        Φ_tot = SharedArray{Float64}((length(k),M,M), pids=workers())
+        A = SharedArray{Float64}((length(k),M,M), pids=workers())
     else
-        S = SharedArray{Complex128}(abspath(fileName),(length(k),M,M), pids=workers(), mode="w+")
-        Φ_sct = SharedArray{Complex128}(abspath(fileName),(length(k),M,M), pids=workers(), mode="w+")
-        Φ_tot = SharedArray{Complex128}(abspath(fileName),(length(k),M,M), pids=workers(), mode="w+")
-        A = SharedArray{Complex128}(abspath(fileName),(length(k),M,M), pids=workers(), mode="w+")
+        S = SharedArray{Complex128}(abspath(prod([fileName,"_S.dat"])),(length(k),M,M), pids=workers(), mode="w+")
+        Φ_sct = SharedArray{Float64}(abspath(prod([fileName,"_Flux_sct.dat"])),(length(k),M,M), pids=workers(), mode="w+")
+        Φ_tot = SharedArray{Float64}(abspath(prod([fileName,"_Flux_tot.dat"])),(length(k),M,M), pids=workers(), mode="w+")
+        A = SharedArray{Float64}(abspath(prod([fileName,"_Absorption.dat"])),(length(k),M,M), pids=workers(), mode="w+")
     end
 
     for i in 1:length(S)
