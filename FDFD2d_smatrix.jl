@@ -231,7 +231,7 @@ function smatrix_lp(input::InputStruct, k::Array{Complex128,1};
             k_inds = Array(nksplits[k_idx]+1:nksplits[k_idx+1])
         end
 
-        @async put!(r, remotecall_fetch(smatrix_lp!, p, S, Φ_sct, Φ_abs, A, input, k, k_inds, a_inds;
+        @async put!(r, remotecall_fetch(smatrix_lp!, p, S, Φ_sct, Φ_tot, A, input, k, k_inds, a_inds;
                 F=F, dispOpt=dispOpt) )
     end
 
