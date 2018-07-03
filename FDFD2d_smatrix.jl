@@ -155,8 +155,8 @@ function smatrix_l(input::InputStruct, k::Array{Complex128,1};
                         cm = analyze_output(input, k[ii], ψ+φ, m′)
                     end
                 end
-                Φ_sct[ii,m,m′] = surface_flux(input, ψ)
-                Φ_tot[ii,m,m′] = surface_flux(input, ψ+φ)
+                Φ_sct[ii,m,m′], dummy = surface_flux(input, ψ)
+                Φ_tot[ii,m,m′], dummy = surface_flux(input, ψ+φ)
                 A[ii,m,m′] = bulk_absorption(input, k[ii], ψ+φ)
                 S[ii,m,m′] = cm
             end
