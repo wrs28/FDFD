@@ -242,8 +242,8 @@ end # end of function smatrix_lp
 """
 smatrix_lp!
 """
-function smatrix_lp!(S::SharedArray{Complex128,3}, Φ_sct::SharedArray{Complex128,3},
-    Φ_tot::SharedArray{Complex128,3}, A::SharedArray{Complex128,3}, input::InputStruct,
+function smatrix_lp!(S::SharedArray{Complex128,3}, Φ_sct::SharedArray{Float64,3},
+    Φ_tot::SharedArray{Float64,3}, A::SharedArray{Float64,3}, input::InputStruct,
     k::Array{Complex128,1}, k_inds::Array{Int,1}, a_inds::Array{Int,1};
     F::Array{Float64,1}=[1.], dispOpt::Bool=true)::
     Tuple{SharedArray{Complex128,3}, SharedArray{Float64,3}, SharedArray{Float64,3}, SharedArray{Float64,3}}
