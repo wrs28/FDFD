@@ -117,16 +117,16 @@ S =  smatrix_l(input; F=[1.], dispOpt=true, fileName = "")
 function smatrix_l(input::InputStruct, k::Array{Complex128,1};
     channels::Array{Int,1}=Array(1:length(input.sct.channels)), F::Array{Float64,1}=[1.],
     dispOpt::Bool=true, fileName::String = "")::
-    Tuple{Array{Complex128,3}, Array{Float64,3}, Array{Float64,3}, Array{Float64,3}}
+    Tuple{Array{Complex128,3}, Array{Float64,2}, Array{Float64,2}, Array{Float64,2}}
 
     nc = length(channels)
     nk = length(k)
 
     M = length(input.sct.channels)
     S = NaN*ones(Complex128,nk,length(channels),M)
-    Φ_sct = NaN*ones(Float64,nk,length(channels),M)
-    Φ_tot = NaN*ones(Float64,nk,length(channels),M)
-    A = NaN*ones(Float64,nk,length(channels),M)
+    Φ_sct = NaN*ones(Float64,nk,length(channels))
+    Φ_tot = NaN*ones(Float64,nk,length(channels))
+    A = NaN*ones(Float64,nk,length(channels))
     a = zeros(Complex128,M)
     ψ = Array{Complex128}(1)
 
@@ -155,11 +155,11 @@ function smatrix_l(input::InputStruct, k::Array{Complex128,1};
                         cm = analyze_output(input, k[ii], ψ+φ, m′)
                     end
                 end
-                Φ_sct[ii,m,m′], dummy = surface_flux(input, ψ)
-                Φ_tot[ii,m,m′], dummy = surface_flux(input, ψ+φ)
-                A[ii,m,m′] = bulk_absorption(input, k[ii], ψ+φ)
                 S[ii,m,m′] = cm
             end
+            Φ_sct[ii,m], dummy = surface_flux(input, ψ)
+            Φ_tot[ii,m], dummy = surface_flux(input, ψ+φ)
+            A[ii,m] = bulk_absorption(input, k[ii], ψ+φ)
         end
 
         if !isempty(fileName)
@@ -179,24 +179,26 @@ defaults to running S only on workers, not on head node
 function smatrix_lp(input::InputStruct, k::Array{Complex128,1};
     F::Array{Float64,1}=[1.], dispOpt::Bool = true, fileName::String = "",
     num_blocks::Int=3)::
-    Tuple{SharedArray{Complex128,3}, SharedArray{Float64,3}, SharedArray{Float64,3}, SharedArray{Float64,3}, Channel}
+    Tuple{SharedArray{Complex128,3}, SharedArray{Float64,2}, SharedArray{Float64,2}, SharedArray{Float64,2}, Channel}
 
     M = length(input.sct.channels)
 
     if isempty(fileName)
         S = SharedArray{Complex128}((length(k),M,M), pids=workers())
-        Φ_sct = SharedArray{Float64}((length(k),M,M), pids=workers())
-        Φ_tot = SharedArray{Float64}((length(k),M,M), pids=workers())
-        A = SharedArray{Float64}((length(k),M,M), pids=workers())
+        Φ_sct = SharedArray{Float64}((length(k),M), pids=workers())
+        Φ_tot = SharedArray{Float64}((length(k),M), pids=workers())
+        A = SharedArray{Float64}((length(k),M), pids=workers())
     else
         S = SharedArray{Complex128}(abspath(prod([fileName,"_S.dat"])),(length(k),M,M), pids=workers(), mode="w+")
-        Φ_sct = SharedArray{Float64}(abspath(prod([fileName,"_Flux_sct.dat"])),(length(k),M,M), pids=workers(), mode="w+")
-        Φ_tot = SharedArray{Float64}(abspath(prod([fileName,"_Flux_tot.dat"])),(length(k),M,M), pids=workers(), mode="w+")
-        A = SharedArray{Float64}(abspath(prod([fileName,"_Absorption.dat"])),(length(k),M,M), pids=workers(), mode="w+")
+        Φ_sct = SharedArray{Float64}(abspath(prod([fileName,"_Flux_sct.dat"])),(length(k),M), pids=workers(), mode="w+")
+        Φ_tot = SharedArray{Float64}(abspath(prod([fileName,"_Flux_tot.dat"])),(length(k),M), pids=workers(), mode="w+")
+        A = SharedArray{Float64}(abspath(prod([fileName,"_Absorption.dat"])),(length(k),M), pids=workers(), mode="w+")
     end
 
     for i in 1:length(S)
         S[i]=1im*NaN
+    end
+    for i in 1:length(A)
         Φ_sct[i]=1.*NaN
         Φ_tot[i]=1.*NaN
         A[i]=1.*NaN
@@ -242,13 +244,13 @@ end # end of function smatrix_lp
 """
 smatrix_lp!
 """
-function smatrix_lp!(S::SharedArray{Complex128,3}, Φ_sct::SharedArray{Float64,3},
-    Φ_tot::SharedArray{Float64,3}, A::SharedArray{Float64,3}, input::InputStruct,
+function smatrix_lp!(S::SharedArray{Complex128,3}, Φ_sct::SharedArray{Float64,2},
+    Φ_tot::SharedArray{Float64,2}, A::SharedArray{Float64,2}, input::InputStruct,
     k::Array{Complex128,1}, k_inds::Array{Int,1}, a_inds::Array{Int,1};
     F::Array{Float64,1}=[1.], dispOpt::Bool=true)::
-    Tuple{SharedArray{Complex128,3}, SharedArray{Float64,3}, SharedArray{Float64,3}, SharedArray{Float64,3}}
+    Tuple{SharedArray{Complex128,3}, SharedArray{Float64,2}, SharedArray{Float64,2}, SharedArray{Float64,2}}
 
-    S[k_inds,a_inds,:], Φ_sct[k_inds,a_inds,:], Φ_tot[k_inds,a_inds,:], A[k_inds,a_inds,:] = smatrix_l(input, k[k_inds]; channels=a_inds, F=F, dispOpt=dispOpt)
+    S[k_inds,a_inds,:], Φ_sct[k_inds,a_inds], Φ_tot[k_inds,a_inds], A[k_inds,a_inds] = smatrix_l(input, k[k_inds]; channels=a_inds, F=F, dispOpt=dispOpt)
 
     return S, Φ_sct, Φ_tot, A
 end # end of function smatrix_lp!
