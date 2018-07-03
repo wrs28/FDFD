@@ -178,7 +178,8 @@ defaults to running S only on workers, not on head node
 """
 function smatrix_lp(input::InputStruct, k::Array{Complex128,1};
     F::Array{Float64,1}=[1.], dispOpt::Bool = true, fileName::String = "",
-    num_blocks::Int=3)::Tuple{SharedArray{Complex128,3}, Channel}
+    num_blocks::Int=3)::
+    Tuple{SharedArray{Complex128,3}, SharedArray{Complex128,3}, SharedArray{Complex128,3}, SharedArray{Complex128,3}, Channel}
 
     M = length(input.sct.channels)
 
