@@ -113,21 +113,22 @@ function synthesize_source(input::InputStruct, k::Complex128, a::Array{Complex12
     Tuple{Array{Complex128,1},Array{Complex128,1}}
 
     N = prod(input.dis.N_PML)
-    φ = zeros(Complex128,N)
+    φ₊ = zeros(Complex128,N)
     φ₋ = zeros(Complex128,N)
-    φt = zeros(Complex128,N)
+    φt₊ = zeros(Complex128,N)
     φt₋ = zeros(Complex128,N)
 
     for m in 1:length(input.sct.channels)
-        φt, φt₋ = incident_mode(input, k, m)
-        φ += a[m]*φt
+        φt₊, φt₋ = incident_mode(input, k, m)
+        φ₊ += a[m]*φt₊
         φ₋ += a[m]*φt₋
     end
+
+    φ = (input.sys.ε_PML[:] .!== input.sct.ε₀_PML[:]).*(φ₊+φ₋) + (input.sys.ε_PML[:] .== input.sct.ε₀_PML[:]).*φ₋
 
     k² = k^2
     k²δ = k²*(input.sys.ε_PML[:]-input.sct.ε₀_PML[:])
     j = -k²δ.*φ
-    φ = (input.sys.ε_PML[:] .!== input.sct.ε₀_PML[:]).*φ + (input.sys.ε_PML[:] .== input.sct.ε₀_PML[:]).*φ₋
 
     return j, φ
 end # end of function synthesize_source

@@ -142,16 +142,24 @@ function smatrix_l(input::InputStruct, k::Array{Complex128,1};
             a[channels[m]] = 1.
             ψ, φ, ζ = scattering_l(input, k[ii], a; H=ζ)
             for m′ in 1:M
+
                 if input.sct.channels[m′].side in ["L", "l", "left", "Left"]
                     phs = exp(-1im*k[ii]*abs(∂[1]-∂R[1]))
                 else
                     phs = exp(-1im*k[ii]*abs(∂[end]-∂R[end]))
                 end
-                if input.sct.channels[m′].side == input.sct.channels[m].side
-                    cm = analyze_output(input, k[ii], ψ, m′)
-                else
+
+                bc_sig = input.bnd.bc_sig
+                if bc_sig in ["dO","Od"]
                     cm = analyze_output(input, k[ii], ψ + φ, m′)
+                elseif bc_sig == "OO"
+                    if input.sct.channels[m′].side == input.sct.channels[m].side
+                        cm = analyze_output(input, k[ii], ψ, m′)
+                    else
+                        cm = analyze_output(input, k[ii], ψ + φ, m′)
+                    end
                 end
+
                 S[ii,m,m′] = phs*cm
             end
         end

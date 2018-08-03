@@ -12,19 +12,26 @@ function analyze_output(input::InputStruct, K::Union{Complex128,Float64,Int},
     k = complex(float(K))
 
     if bc_sig == "Od"
-        x = input.dis.x[1] - input.bnd.∂R[2]
-        φ = +sqrt(1/k)*exp(+1im*k*x)
-        P = reshape(ψ[input.x̄_inds],input.N[1],:)[1,:]
-        cm = sum(φ.*P)*input.dx̄[2]
-        bm = -input.a[m]
+        if input.sct.channels[m].side in ["l", "L", "left", "Left"]
+            p = ψ[input.dis.x_inds[1]]
+        elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
+            p=0
+        end
+        cm = sqrt(real(k))*p
     elseif bc_sig == "dO"
-        x = input.x₁[end] - input.∂R[1]
-        φ = +sqrt(1/k)*exp(-1im*k*x)
-        P = reshape(ψ[input.x̄_inds],input.N[1],:)[end,:]
-        cm = sum(φ.*P)*input.dx̄[2]
-        bm = -input.a[m]
+        if input.sct.channels[m].side in ["l", "L", "left", "Left"]
+            p = 0
+        elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
+            p = ψ[input.dis.x_inds[end]]
+        end
+        cm = sqrt(real(k))*p
     elseif bc_sig in ["OO", "II"]
-        cm = analyze_into_waveguides(input, k, ψ, m, "out")
+        if input.sct.channels[m].side in ["l", "L", "left", "Left"]
+            p = ψ[input.dis.x_inds[1]]
+        elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
+            p = ψ[input.dis.x_inds[end]]
+        end
+        cm = sqrt(real(k))*p
     end
 
     return cm
@@ -55,35 +62,6 @@ end
 ################################################################################
 ### Analyzer Subroutines
 ################################################################################
-
-"""
-analyze_into_waveguides(input, k, ψ, m, direction)
-"""
-function analyze_into_waveguides(input::InputStruct, k::Complex128,
-    ψ::Array{Complex{Float64},1}, m::Int, direction::String)::Complex128
-
-    if input.sct.channels[m].side in ["l", "L", "left", "Left"]
-        p = ψ[input.dis.x_inds[1]]
-        # x = input.bnd.∂R[1]
-        # if direction == "in"
-        #     phs = exp(-1im*k*(x-input.bnd.∂S[2]))
-        # elseif direction == "out"
-        #     phs = exp(+1im*k*(x-input.bnd.∂S[2]))
-        # end
-    elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
-        p = ψ[input.dis.x_inds[end]]
-        # x = input.bnd.∂R[2]
-        # if direction == "in"
-        #     phs = exp(+1im*k*(x-input.bnd.∂S[1]))
-        # elseif direction == "out"
-        #     phs = exp(-1im*k*(x-input.bnd.∂S[1]))
-        # end
-    end
-
-    cm = sqrt(real(k))*p#analysis_interpolate(input, x, ψ)
-
-    return cm
-end
 
 """
 P = analysis_interpolate(input, X, ψ)

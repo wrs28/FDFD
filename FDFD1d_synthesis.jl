@@ -19,19 +19,18 @@ function incident_mode(input::InputStruct, k::Complex128, m::Int)::
     φ = zeros(Complex128, N)
 
     x = input.dis.x_PML
-    M = input.bnd.∂R[1] .≤ x .≤ input.bnd.∂R[2]
 
     bc_sig = input.bnd.bc_sig
     if bc_sig == "Od"
         # metallic waveguide in x-direction, open on left
-        x = input.dis.x_PML[1] - input.bnd.∂R[2]
-        L = input.ℓ
-        φ₊ = +exp(2L*imag(k))*sqrt(1/real(k))*exp(+1im*k*x)
-        φ₋ = -exp(2L*imag(k))*sqrt(1/real(k))*exp(-1im*k*x)
+        ∂ = input.bnd.∂R[2]
+        L = input.bnd.ℓ
+        φ₊ = +exp(2L*imag(k))*sqrt(1/real(k))*exp.(+1im*k*(x-∂))
+        φ₋ = -exp(2L*imag(k))*sqrt(1/real(k))*exp.(-1im*k*(x-∂))
     elseif bc_sig == "dO"
         # metallic waveguide in x-direction, open on right
         x = input.x̄_sct[1] - input.∂R[1]
-        L = input.ℓ[1]
+        L = input.bnd.ℓ[1]
         φy = quasi_1d_transverse_y.(input,m,y)
         kᵤ = quasi_1d_transverse_y(input,m)
         kₓ = sqrt(k^2 - kᵤ^2)
@@ -44,10 +43,12 @@ function incident_mode(input::InputStruct, k::Complex128, m::Int)::
         elseif input.sct.channels[m].side in ["r", "R", "right", "Right"]
             φ₊ = sqrt(1/real(k))*exp.(-1im*k*(x-∂[end]))
         end
-        φ₋ = copy(φ₊)
+
+        φ₋ = zeros(φ₊)
+        φ₋ += φ₊.*(input.sys.ε_PML[:] .== input.sct.ε₀_PML[:])
     end
 
     reset_bc!(input,bc_original)
 
-    return φ₊, φ₋.*M
+    return φ₊, φ₋ #φ₋.*M
 end # end of function incident_mode
