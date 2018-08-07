@@ -234,15 +234,14 @@ mutable struct InputStruct
             end
         end
         N_PML = [N[1] + dN_PML[1] + dN_PML[2], N[2] + dN_PML[3] + dN_PML[4]]
-        ∂R_PML = [∂R[1] - dx[1]*(dN_PML[1]) - dx[1]/2,
-                ∂R[2] + dx[1]*(dN_PML[2]) + dx[1]/2,
-                ∂R[3] - dx[2]*(dN_PML[3]) - dx[2]/2,
-                ∂R[4] + dx[2]*(dN_PML[4]) + dx[2]/2]
+        ∂R_PML = [∂R[1] - dx[1]*(dN_PML[1]),
+                ∂R[2] + dx[1]*(dN_PML[2]),
+                ∂R[3] - dx[2]*(dN_PML[3]),
+                ∂R[4] + dx[2]*(dN_PML[4])]
         ℓ_PML = [∂R_PML[2]-∂R_PML[1], ∂R_PML[4]-∂R_PML[3]]
         xy_PML = (∂R_PML[1] + dx[1]/2 + dx[1]*(0:N_PML[1]-1), ∂R_PML[3] + dx[2]/2 + dx[2]*(0:N_PML[2]-1))
         XY_PML = ( repeat(xy_PML[1]; outer=(1,N_PML[2])) , repeat(transpose(xy_PML[2]); outer=(N_PML[1],1)) )
-        #xy_inds = reshape(kron(dN_PML[1]+(1:N[1]), ones(dN_PML[3]+(1:N[2]))), N[1],N[2])[:]
-        # @time xy_inds = ( (A,B) -> sub2ind((N_PML...),A,B)).( repeat(dN_PML[1]+(1:N[1]); inner=(1,N[2])) , repeat(transpose(dN_PML[3]+(1:N[2])); outer=(N[1],1)))[:]
+
         xy_inds = zeros(Int,N[1],N[2])
         for i in 1:N[1], j in 1:N[2]
             xy_inds[i,j] = sub2ind((N_PML...), dN_PML[1]+(1:N[1])[i],dN_PML[3]+(1:N[2])[j])
