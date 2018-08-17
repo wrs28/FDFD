@@ -208,8 +208,8 @@ mutable struct InputStruct
             end
         end
         N_PML = N[1] + dN_PML[1] + dN_PML[2]
-        ∂R_PML = [∂R[1] - dx[1]*(dN_PML[1]) - dx[1]/2,
-                ∂R[2] + dx[1]*(dN_PML[2]) + dx[1]/2]
+        ∂R_PML = [∂R[1] - dx[1]*(dN_PML[1]),
+                ∂R[2] + dx[1]*(dN_PML[2])]
         ℓ_PML = ∂R_PML[2]-∂R_PML[1]
         x_PML = ∂R_PML[1] + dx[1]/2 + dx[1]*(0:N_PML[1]-1)
         X_PML = x_PML
